@@ -43,18 +43,10 @@ export async function setupScramjet() {
   const registration =
     await navigator.serviceWorker.register("/sw.js", {
       type: "module",
+      scope: "/scramjet/",
     });
 
   await navigator.serviceWorker.ready;
-
-  if (!navigator.serviceWorker.controller) {
-    console.log(
-      "Service worker installed. Reloading once..."
-    );
-
-    window.location.reload();
-    return;
-  }
 
   if (!globalThis.$scramjetLoadController) {
     throw new Error(
