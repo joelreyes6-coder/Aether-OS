@@ -6623,3 +6623,1025 @@ body {
   .background-admin-ghost,
   .background-admin-prime { animation:none !important; }
 }
+
+/* =========================================================
+   AETHER OS — CYBER GRID + MATRIX FINAL FIX
+   Intentionally last so these rules win the cascade.
+========================================================= */
+
+/* ---------- CYBER GRID ---------- */
+.background-grid {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% 105%, rgba(var(--glow-1), .22), transparent 42%),
+    radial-gradient(circle at 15% 18%, rgba(var(--glow-2), .16), transparent 34%),
+    linear-gradient(145deg, var(--bg-1), var(--bg-2) 55%, var(--bg-3)) !important;
+}
+
+.background-grid::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: -80% -35% -15% !important;
+  pointer-events: none !important;
+
+  background-image:
+    linear-gradient(rgba(var(--glow-1), .55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--glow-1), .55) 1px, transparent 1px),
+    linear-gradient(rgba(var(--glow-2), .16) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(var(--glow-2), .16) 2px, transparent 2px) !important;
+
+  background-size:
+    48px 48px,
+    48px 48px,
+    192px 192px,
+    192px 192px !important;
+
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0;
+
+  opacity: .62 !important;
+
+  transform:
+    perspective(580px)
+    rotateX(66deg)
+    translateY(15%) !important;
+
+  transform-origin: center bottom !important;
+
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 1%, #000 25%, #000 100%) !important;
+
+  mask-image:
+    linear-gradient(to bottom, transparent 1%, #000 25%, #000 100%) !important;
+
+  filter:
+    drop-shadow(0 0 8px rgba(var(--glow-1), .42)) !important;
+
+  animation:
+    aetherCyberGridFinal 2.4s linear infinite !important;
+
+  will-change: background-position;
+}
+
+.background-grid::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  left: 0 !important;
+  top: 0 !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  pointer-events: none !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 3%,
+      rgba(var(--glow-1), .10),
+      rgba(var(--glow-1), .95),
+      rgba(var(--glow-1), .10),
+      transparent 97%
+    ) 50% 68% / 100% 2px no-repeat,
+
+    radial-gradient(
+      ellipse at 50% 68%,
+      rgba(var(--glow-1), .34),
+      transparent 25%
+    ) !important;
+
+  opacity: .65 !important;
+
+  filter:
+    drop-shadow(0 0 15px rgba(var(--glow-1), .65)) !important;
+
+  animation:
+    aetherCyberHorizonFinal 2.2s ease-in-out infinite !important;
+
+  will-change: opacity, filter;
+}
+
+@keyframes aetherCyberGridFinal {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+
+  100% {
+    background-position:
+      0 192px,
+      192px 0,
+      0 384px,
+      384px 0;
+  }
+}
+
+@keyframes aetherCyberHorizonFinal {
+  0%, 100% {
+    opacity: .42;
+    filter:
+      brightness(.9)
+      drop-shadow(0 0 10px rgba(var(--glow-1), .45));
+  }
+
+  50% {
+    opacity: .88;
+    filter:
+      brightness(1.7)
+      drop-shadow(0 0 22px rgba(var(--glow-1), .9));
+  }
+}
+
+
+/* ---------- MATRIX RAIN ---------- */
+.background-matrix {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 105%,
+      rgba(var(--glow-1), .16),
+      transparent 46%
+    ),
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(var(--glow-2), .10),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      var(--bg-1),
+      var(--bg-2) 55%,
+      var(--bg-3)
+    ) !important;
+}
+
+.background-matrix::before {
+  content:
+    "01 10 11 00 01 101 001 10 01 11 010 101 00 11 01 10 001 101 010 11 00 01 10 101 001 11 010 01 00 10 11 101 010 001 01 10 11 00 101 010 01 001 11 10 00 101 01 010 11 001 10 00 01 101 010 11 10 001 00 01 101 11 010 01 10 00 11 101 010 001 10 11 00 101 010 01 11 001 10 00 01 101 010 11" !important;
+
+  position: absolute !important;
+  z-index: 0 !important;
+
+  inset: -135% -5% -20% !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  pointer-events: none !important;
+  overflow: hidden !important;
+
+  color:
+    rgba(var(--glow-1), .78) !important;
+
+  font:
+    700 15px/1.7 "Courier New", monospace !important;
+
+  letter-spacing: 10px !important;
+  word-spacing: 15px !important;
+
+  writing-mode: vertical-rl !important;
+  text-orientation: upright !important;
+
+  text-shadow:
+    0 0 5px rgba(var(--glow-1), .95),
+    0 0 12px rgba(var(--glow-1), .55) !important;
+
+  opacity: .72 !important;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(var(--glow-1), .025) 0 2px,
+      transparent 2px 48px
+    ) !important;
+
+  transform: translateY(-15%);
+
+  filter:
+    drop-shadow(0 0 6px rgba(var(--glow-1), .4)) !important;
+
+  animation:
+    aetherMatrixRainFinal 4.2s linear infinite !important;
+
+  will-change: transform;
+}
+
+.background-matrix::after {
+  content: "" !important;
+
+  position: absolute !important;
+  z-index: 0 !important;
+
+  inset: 0 !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  left: 0 !important;
+  top: 0 !important;
+
+  transform: none !important;
+  border-radius: 0 !important;
+
+  pointer-events: none !important;
+
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 40%,
+      rgba(var(--glow-1), .08) 46%,
+      rgba(var(--glow-1), .65) 50%,
+      rgba(var(--glow-1), .08) 54%,
+      transparent 60%,
+      transparent 100%
+    ) 0 -100vh / 100% 100vh no-repeat,
+
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 30px,
+      rgba(var(--glow-1), .045) 31px,
+      transparent 33px 58px
+    ) !important;
+
+  opacity: .72 !important;
+
+  filter:
+    drop-shadow(0 0 9px rgba(var(--glow-1), .42)) !important;
+
+  animation:
+    aetherMatrixScannerFinal 2.8s linear infinite !important;
+
+  will-change: background-position;
+}
+
+@keyframes aetherMatrixRainFinal {
+  0% {
+    transform: translateY(-22%);
+  }
+
+  100% {
+    transform: translateY(42%);
+  }
+}
+
+@keyframes aetherMatrixScannerFinal {
+  0% {
+    background-position:
+      0 -100vh,
+      0 0;
+  }
+
+  100% {
+    background-position:
+      0 100vh,
+      0 0;
+  }
+}
+
+
+/* These are intentionally animated user-selected wallpapers. */
+@media (prefers-reduced-motion: reduce) {
+  .background-grid::before {
+    animation:
+      aetherCyberGridFinal 2.4s linear infinite !important;
+  }
+
+  .background-grid::after {
+    animation:
+      aetherCyberHorizonFinal 2.2s ease-in-out infinite !important;
+  }
+
+  .background-matrix::before {
+    animation:
+      aetherMatrixRainFinal 4.2s linear infinite !important;
+  }
+
+  .background-matrix::after {
+    animation:
+      aetherMatrixScannerFinal 2.8s linear infinite !important;
+  }
+}
+
+/* =========================================================
+   AETHER OS — BACKGROUND V2
+   Simple visible animations; no perspective/text-layout dependency.
+========================================================= */
+
+/* CYBER GRID: obvious moving 2D grid */
+.background-grid::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  opacity: .72 !important;
+  transform: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  filter: drop-shadow(0 0 5px rgba(var(--glow-1), .55)) !important;
+
+  background-image:
+    linear-gradient(rgba(var(--glow-1), .42) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(var(--glow-1), .42) 2px, transparent 2px) !important;
+  background-size: 64px 64px !important;
+  background-position: 0 0, 0 0 !important;
+
+  animation: aetherGridVisibleMove 1.8s linear infinite !important;
+  will-change: background-position !important;
+}
+
+.background-grid::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  transform: none !important;
+  opacity: .7 !important;
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(var(--glow-1), .06) 45%,
+      rgba(var(--glow-1), .55) 50%,
+      rgba(var(--glow-1), .06) 55%,
+      transparent 100%
+    ) !important;
+  background-size: 100% 180px !important;
+  background-repeat: no-repeat !important;
+  animation: aetherGridScanVisible 3s linear infinite !important;
+}
+
+@keyframes aetherGridVisibleMove {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 64px 64px, 64px 64px;
+  }
+}
+
+@keyframes aetherGridScanVisible {
+  from {
+    background-position: 0 -180px;
+  }
+  to {
+    background-position: 0 calc(100vh + 180px);
+  }
+}
+
+
+/* MATRIX: theme-colored falling digital columns made from gradients */
+.background-matrix::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -100% 0 0 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+
+  width: 100% !important;
+  height: 200% !important;
+
+  writing-mode: initial !important;
+  color: transparent !important;
+  text-shadow: none !important;
+  font-size: 0 !important;
+  letter-spacing: 0 !important;
+  word-spacing: 0 !important;
+
+  opacity: .82 !important;
+  transform: translateY(0) !important;
+  filter: drop-shadow(0 0 6px rgba(var(--glow-1), .55)) !important;
+
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 18px,
+      rgba(var(--glow-1), .78) 19px 21px,
+      transparent 22px 48px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 43px,
+      rgba(var(--glow-2), .58) 44px 46px,
+      transparent 47px 83px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 18px,
+      rgba(var(--glow-1), .72) 19px 22px,
+      transparent 23px 43px
+    ) !important;
+
+  background-size:
+    96px 100%,
+    166px 100%,
+    100% 43px !important;
+
+  animation: aetherMatrixVisibleFall 3.2s linear infinite !important;
+  will-change: transform, background-position !important;
+}
+
+.background-matrix::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+
+  opacity: .78 !important;
+  transform: none !important;
+  filter: none !important;
+
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 42%,
+      rgba(var(--glow-1), .12) 47%,
+      rgba(var(--glow-1), .72) 50%,
+      rgba(var(--glow-1), .12) 53%,
+      transparent 58%,
+      transparent 100%
+    ) !important;
+
+  background-size: 100% 220px !important;
+  background-repeat: no-repeat !important;
+
+  animation: aetherMatrixVisibleScan 2.4s linear infinite !important;
+}
+
+@keyframes aetherMatrixVisibleFall {
+  from {
+    transform: translateY(-45%) !important;
+    background-position: 0 0, 0 0, 0 0;
+  }
+  to {
+    transform: translateY(0%) !important;
+    background-position: 0 220px, 0 360px, 0 172px;
+  }
+}
+
+@keyframes aetherMatrixVisibleScan {
+  from {
+    background-position: 0 -220px;
+  }
+  to {
+    background-position: 0 calc(100vh + 220px);
+  }
+}
+
+/* Selected wallpapers remain animated. */
+@media (prefers-reduced-motion: reduce) {
+  .background-grid::before {
+    animation: aetherGridVisibleMove 1.8s linear infinite !important;
+  }
+  .background-grid::after {
+    animation: aetherGridScanVisible 3s linear infinite !important;
+  }
+  .background-matrix::before {
+    animation: aetherMatrixVisibleFall 3.2s linear infinite !important;
+  }
+  .background-matrix::after {
+    animation: aetherMatrixVisibleScan 2.4s linear infinite !important;
+  }
+}
+
+/* =========================================================
+   AETHER OS — AUTHORITATIVE CYBER GRID + MATRIX
+   Uses the desktop element itself, avoiding old pseudo-element conflicts.
+========================================================= */
+
+/* CYBER GRID */
+.desktop.background-grid {
+  background-image:
+    linear-gradient(rgba(var(--glow-1), .32) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--glow-1), .32) 1px, transparent 1px),
+    radial-gradient(circle at 50% 110%, rgba(var(--glow-1), .25), transparent 42%),
+    linear-gradient(145deg, var(--bg-1), var(--bg-2) 55%, var(--bg-3)) !important;
+  background-size:
+    54px 54px,
+    54px 54px,
+    100% 100%,
+    100% 100% !important;
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0 !important;
+  animation: aetherCyberDesktopMove 2s linear infinite !important;
+}
+
+.desktop.background-grid::before,
+.desktop.background-grid::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}
+
+@keyframes aetherCyberDesktopMove {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      54px 54px,
+      54px 54px,
+      0 0,
+      0 0;
+  }
+}
+
+
+/* MATRIX RAIN
+   Vertical luminous streaks with staggered gradient layers.
+*/
+.desktop.background-matrix {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 20px,
+      rgba(var(--glow-1), .78) 21px 23px,
+      transparent 24px 52px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 38px,
+      rgba(var(--glow-2), .52) 39px 41px,
+      transparent 42px 91px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 28px,
+      rgba(var(--glow-1), .38) 29px 32px,
+      transparent 33px 68px
+    ),
+    radial-gradient(circle at 50% 110%, rgba(var(--glow-1), .18), transparent 46%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2) 55%, var(--bg-3)) !important;
+
+  background-size:
+    104px 240px,
+    182px 330px,
+    100% 68px,
+    100% 100%,
+    100% 100% !important;
+
+  background-position:
+    0 -240px,
+    31px -330px,
+    0 0,
+    0 0,
+    0 0 !important;
+
+  animation: aetherMatrixDesktopFall 2.4s linear infinite !important;
+}
+
+.desktop.background-matrix::before,
+.desktop.background-matrix::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}
+
+@keyframes aetherMatrixDesktopFall {
+  0% {
+    background-position:
+      0 -240px,
+      31px -330px,
+      0 0,
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      0 0,
+      31px 0,
+      0 68px,
+      0 0,
+      0 0;
+  }
+}
+
+/* Keep these intentionally animated wallpapers active. */
+@media (prefers-reduced-motion: reduce) {
+  .desktop.background-grid {
+    animation: aetherCyberDesktopMove 2s linear infinite !important;
+  }
+
+  .desktop.background-matrix {
+    animation: aetherMatrixDesktopFall 2.4s linear infinite !important;
+  }
+}
+
+/* =========================================================
+   AETHER OS — REMADE CYBER GRID + MATRIX RAIN
+   Dedicated React layers. These no longer depend on the
+   legacy desktop pseudo-element wallpaper system.
+========================================================= */
+
+.desktop.background-grid,
+.desktop.background-matrix {
+  background:
+    radial-gradient(circle at 50% 115%, rgba(var(--glow-1), .16), transparent 42%),
+    linear-gradient(145deg, var(--bg-1), var(--bg-2) 58%, var(--bg-3)) !important;
+  animation: none !important;
+}
+
+.desktop.background-grid::before,
+.desktop.background-grid::after,
+.desktop.background-matrix::before,
+.desktop.background-matrix::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}
+
+.cyber-grid-remake,
+.matrix-rain-remake {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cyber-grid-remake {
+  background:
+    radial-gradient(ellipse at 50% 64%, rgba(var(--glow-1), .12), transparent 30%),
+    linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.42));
+}
+
+.cyber-grid-sky-glow {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 80vw;
+  height: 28vh;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(var(--glow-1), .28), transparent 66%);
+  filter: blur(24px);
+  animation: cyberSkyPulse 3s ease-in-out infinite;
+}
+
+.cyber-grid-floor {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: 57%;
+  bottom: -18%;
+  perspective: 520px;
+  perspective-origin: 50% 0%;
+  overflow: hidden;
+}
+
+.cyber-grid-plane {
+  position: absolute;
+  left: 0;
+  top: -28%;
+  width: 100%;
+  height: 150%;
+  transform: rotateX(61deg);
+  transform-origin: center top;
+  animation: cyberPlaneTravel 1.45s linear infinite;
+}
+
+.cyber-grid-line {
+  position: absolute;
+  display: block;
+  background: rgba(var(--glow-1), .72);
+  box-shadow:
+    0 0 5px rgba(var(--glow-1), .82),
+    0 0 12px rgba(var(--glow-1), .28);
+}
+
+.cyber-grid-line-horizontal {
+  left: 0;
+  width: 100%;
+  height: 1px;
+  top: calc(var(--grid-index) * 6%);
+}
+
+.cyber-grid-line-vertical {
+  top: 0;
+  height: 100%;
+  width: 1px;
+  left: calc(var(--grid-index) * 4.76%);
+}
+
+.cyber-grid-horizon {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 57%;
+  height: 2px;
+  background: rgba(var(--glow-1), .92);
+  box-shadow:
+    0 0 10px rgba(var(--glow-1), .95),
+    0 0 28px rgba(var(--glow-1), .72);
+  animation: cyberHorizonPulse 2.2s ease-in-out infinite;
+}
+
+.cyber-grid-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 120px;
+  top: -140px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(var(--glow-2), .10),
+    rgba(var(--glow-1), .22),
+    transparent
+  );
+  animation: cyberScanTravel 4.4s linear infinite;
+}
+
+@keyframes cyberPlaneTravel {
+  from { transform: rotateX(61deg) translateY(-6%); }
+  to   { transform: rotateX(61deg) translateY(6%); }
+}
+
+@keyframes cyberSkyPulse {
+  0%, 100% { opacity: .48; transform: translate(-50%, -50%) scale(.96); }
+  50% { opacity: .9; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes cyberHorizonPulse {
+  0%, 100% { opacity: .5; filter: brightness(.8); }
+  50% { opacity: 1; filter: brightness(1.8); }
+}
+
+@keyframes cyberScanTravel {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(100vh + 280px)); }
+}
+
+
+/* MATRIX RAIN */
+.matrix-rain-remake {
+  background:
+    radial-gradient(circle at 50% 110%, rgba(var(--glow-1), .15), transparent 48%),
+    linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.38));
+}
+
+.matrix-rain-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(var(--glow-2), .10), transparent 25%),
+    radial-gradient(circle at 78% 72%, rgba(var(--glow-1), .10), transparent 28%);
+  animation: matrixGlowPulse 4s ease-in-out infinite alternate;
+}
+
+.matrix-rain-column {
+  position: absolute;
+  top: -145vh;
+  width: 28px;
+  height: auto;
+  white-space: pre-line;
+  text-align: center;
+  font-family: "Courier New", monospace;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.22;
+  color: rgb(var(--glow-1));
+  text-shadow:
+    0 0 4px rgba(var(--glow-1), .95),
+    0 0 10px rgba(var(--glow-1), .68),
+    0 0 18px rgba(var(--glow-2), .30);
+  animation-name: matrixColumnFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.matrix-rain-column:nth-of-type(3n) {
+  font-size: 12px;
+  filter: blur(.15px);
+}
+
+.matrix-rain-column:nth-of-type(4n) {
+  color: rgb(var(--glow-2));
+}
+
+.matrix-rain-column:nth-of-type(5n) {
+  font-size: 18px;
+}
+
+.matrix-rain-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -90px;
+  height: 90px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(var(--glow-1), .12),
+    rgba(var(--glow-1), .34),
+    transparent
+  );
+  filter: blur(2px);
+  animation: matrixScanFall 3.2s linear infinite;
+}
+
+@keyframes matrixColumnFall {
+  from { transform: translateY(-10vh); }
+  to { transform: translateY(265vh); }
+}
+
+@keyframes matrixScanFall {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(100vh + 180px)); }
+}
+
+@keyframes matrixGlowPulse {
+  from { opacity: .45; }
+  to { opacity: .9; }
+}
+
+/* These are intentionally animated user-selected wallpapers. */
+@media (prefers-reduced-motion: reduce) {
+  .cyber-grid-plane { animation: cyberPlaneTravel 1.45s linear infinite !important; }
+  .cyber-grid-sky-glow { animation: cyberSkyPulse 3s ease-in-out infinite !important; }
+  .cyber-grid-horizon { animation: cyberHorizonPulse 2.2s ease-in-out infinite !important; }
+  .cyber-grid-scan { animation: cyberScanTravel 4.4s linear infinite !important; }
+  .matrix-rain-column {
+    animation-name: matrixColumnFall !important;
+    animation-timing-function: linear !important;
+    animation-iteration-count: infinite !important;
+  }
+  .matrix-rain-scan { animation: matrixScanFall 3.2s linear infinite !important; }
+  .matrix-rain-glow { animation: matrixGlowPulse 4s ease-in-out infinite alternate !important; }
+}
+
+
+
+/* ===== AETHER WALLPAPER CODE ===== */
+.wallpaper-code-panel{grid-column:1/-1;display:flex;flex-direction:column;gap:11px;margin-bottom:4px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(var(--glow-1),.035)}
+.wallpaper-code-copy{display:flex;flex-direction:column;gap:3px}.wallpaper-code-copy strong{color:var(--text);font-size:11px;letter-spacing:1.5px}.wallpaper-code-copy small{color:var(--muted);font-size:9px}
+.wallpaper-code-entry{display:flex;gap:8px}.wallpaper-code-entry input{flex:1;min-width:0;height:38px;padding:0 13px;outline:none;border:1px solid var(--border);border-radius:10px;background:var(--input);color:var(--text);font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.wallpaper-code-entry input:focus{border-color:var(--accent);box-shadow:0 0 16px rgba(var(--glow-1),.12)}
+.wallpaper-code-entry button{height:38px;padding:0 16px;border:1px solid var(--border-strong);border-radius:10px;background:rgba(var(--glow-1),.12);color:var(--text);font-size:9px;font-weight:900;letter-spacing:1.3px;cursor:pointer}
+.wallpaper-code-entry button:hover{background:rgba(var(--glow-1),.22);box-shadow:0 0 16px rgba(var(--glow-1),.14)}
+.wallpaper-code-message{font-size:9px;font-weight:900;letter-spacing:1.3px}.wallpaper-code-message.success{color:var(--success)}.wallpaper-code-message.error{color:#ff5470}
+
+/* ===== AETHER ENTER ANIMATION ===== */
+.aether-enter-screen{position:fixed;z-index:200000;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;pointer-events:all;background:radial-gradient(circle at 50% 48%,rgba(var(--glow-1),.16),transparent 26%),linear-gradient(145deg,var(--bg-1),#000 72%);animation:aetherEnterExit 1.85s cubic-bezier(.7,0,.25,1) forwards}
+.aether-enter-screen::before{content:"";position:absolute;inset:0;opacity:.22;background-image:linear-gradient(rgba(var(--glow-1),.18) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--glow-1),.18) 1px,transparent 1px);background-size:48px 48px;animation:aetherEnterGrid 1.1s linear infinite}
+.aether-enter-core{position:relative;z-index:2;width:116px;height:116px;display:flex;align-items:center;justify-content:center;animation:aetherCoreArrive .65s cubic-bezier(.16,1,.3,1) both}
+.aether-enter-ring{position:absolute;border:1px solid rgba(var(--glow-1),.65);border-radius:50%;box-shadow:0 0 18px rgba(var(--glow-1),.18),inset 0 0 18px rgba(var(--glow-1),.08)}
+.aether-enter-ring-one{inset:4px;border-top-color:var(--accent);border-right-color:transparent;animation:aetherRingSpin 1.2s linear infinite}.aether-enter-ring-two{inset:18px;border-bottom-color:var(--accent-soft);border-left-color:transparent;animation:aetherRingSpinReverse .8s linear infinite}
+.aether-enter-mark{position:relative;z-index:3;color:var(--text);font-size:38px;font-weight:200;text-shadow:0 0 12px rgba(var(--glow-1),.9),0 0 30px rgba(var(--glow-1),.4)}
+.aether-enter-title,.aether-enter-status,.aether-enter-loader{position:relative;z-index:2}.aether-enter-title{margin-top:20px;color:var(--text);font-size:16px;font-weight:700;letter-spacing:7px;animation:aetherTextArrive .55s .18s ease-out both}.aether-enter-status{margin-top:9px;color:var(--muted);font-size:8px;font-weight:800;letter-spacing:2.4px;animation:aetherTextArrive .55s .28s ease-out both}
+.aether-enter-loader{width:190px;height:2px;margin-top:20px;overflow:hidden;border-radius:999px;background:rgba(var(--glow-1),.10)}.aether-enter-loader span{display:block;width:100%;height:100%;transform-origin:left;background:linear-gradient(90deg,var(--accent-2),var(--accent),var(--accent-soft));box-shadow:0 0 12px rgba(var(--glow-1),.65);animation:aetherLoadFill 1.18s .32s cubic-bezier(.2,.8,.2,1) both}
+@keyframes aetherEnterExit{0%,73%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@keyframes aetherCoreArrive{from{opacity:0;transform:scale(.55);filter:blur(8px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+@keyframes aetherRingSpin{to{transform:rotate(360deg)}}@keyframes aetherRingSpinReverse{to{transform:rotate(-360deg)}}
+@keyframes aetherTextArrive{from{opacity:0;transform:translateY(9px);letter-spacing:10px}to{opacity:1;transform:translateY(0)}}
+@keyframes aetherLoadFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}@keyframes aetherEnterGrid{to{background-position:48px 48px,48px 48px}}
+
+/* =========================================================
+   AETHER OS — AUTHORITATIVE LIVE WALLPAPER STACK FIX
+   Keeps video above all static/remade wallpaper layers while
+   preserving desktop UI, windows, taskbar, menus and cursor.
+========================================================= */
+
+.live-wallpaper-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 4 !important;
+  display: block !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  background: #000 !important;
+}
+
+.live-wallpaper-video {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  pointer-events: none !important;
+  background: #000 !important;
+}
+
+.live-wallpaper-shade {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.has-live-wallpaper .cyber-grid-remake,
+.has-live-wallpaper .matrix-rain-remake {
+  display: none !important;
+}
+
+.has-live-wallpaper .desktop-brand,
+.has-live-wallpaper .desktop-dashboard {
+  position: absolute;
+  z-index: 5 !important;
+}
+
+.has-live-wallpaper .window,
+.has-live-wallpaper .settings-window,
+.has-live-wallpaper .messages-window {
+  z-index: 50 !important;
+}
+
+.has-live-wallpaper .taskbar {
+  z-index: 1000 !important;
+}
+
+.has-live-wallpaper .system-telemetry {
+  z-index: 1200 !important;
+}
+
+.has-live-wallpaper .start-menu-backdrop {
+  z-index: 1390 !important;
+}
+
+.has-live-wallpaper .start-menu {
+  z-index: 1400 !important;
+}
+
+.has-live-wallpaper .cursor-dot,
+.has-live-wallpaper .cursor-glow {
+  z-index: 100000 !important;
+}
+
+
+
+/* ===== AETHER CLICK-TO-ENTER STARTUP ===== */
+.aether-enter-screen {
+  animation: none !important;
+}
+
+.aether-enter-button {
+  position: relative;
+  z-index: 3;
+  min-width: 150px;
+  height: 42px;
+  margin-top: 22px;
+  padding: 0 28px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(var(--glow-1), 0.1);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  cursor: pointer !important;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: aetherEnterButtonReady 0.45s 1.15s ease-out forwards;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.05),
+    0 0 18px rgba(var(--glow-1), 0.08);
+}
+
+.aether-enter-button:hover {
+  border-color: var(--accent);
+  background: rgba(var(--glow-1), 0.2);
+  box-shadow:
+    0 0 24px rgba(var(--glow-1), 0.2),
+    inset 0 1px rgba(255, 255, 255, 0.07);
+}
+
+@keyframes aetherEnterButtonReady {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

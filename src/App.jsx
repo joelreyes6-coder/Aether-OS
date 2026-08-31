@@ -6,6 +6,12 @@ import {
   getScramjet,
 } from "./scramjet.js";
 
+const API_BASE_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:5001"
+    : "";
+
 const themes = [
   {
     id: "nebula",
@@ -62,7 +68,7 @@ const backgrounds = [
   { id: "mesh", name: "Holographic Mesh", description: "Animated dimensional wireframe", icon: "◇" },
   { id: "nebula", name: "Cosmic Nebula", description: "Swirling deep-space energy", icon: "☄" },
   { id: "reactor", name: "Core Reactor", description: "Pulsing sci-fi energy core", icon: "◎" },
- ];
+];
 
 const adminBackgrounds = [
   { id: "admin-singularity", name: "Admin Singularity", description: "Event-horizon energy reserved for Aether admins", icon: "◉" },
@@ -95,6 +101,31 @@ const liveWallpapers = [
     src: "/wallpapers/snowfall-in-forest.3840x2160.mp4",
   },
 ];
+
+const codeWallpapers = {
+  GAVIN09: {
+    id: "gavin",
+    name: "Gavin",
+    description: "Unlocked with wallpaper code GAVIN09",
+    icon: "◆",
+    src: "/wallpapers/gavin-wallpaper.mp4",
+  },
+};
+
+const cyberGridLines = Array.from({ length: 18 }, (_, index) => index);
+const cyberGridColumns = Array.from({ length: 22 }, (_, index) => index);
+
+const matrixColumns = Array.from({ length: 30 }, (_, index) => ({
+  id: index,
+  left: `${(index / 30) * 100}%`,
+  delay: `${-((index * 0.47) % 5.8)}s`,
+  duration: `${3.2 + ((index * 0.73) % 3.8)}s`,
+  opacity: 0.42 + ((index * 17) % 45) / 100,
+  text: Array.from({ length: 28 }, (_, charIndex) => {
+    const chars = "01アイウエオカキクケコサシスセソタチツテト";
+    return chars[(index * 7 + charIndex * 5) % chars.length];
+  }).join("\n"),
+}));
 
 const cursors = [
   { id: "glow", name: "Glow", description: "Classic trailing glow", icon: "●" },
@@ -241,6 +272,17 @@ function App() {
   const [liveWallpaper, setLiveWallpaper] = useState(() => {
     return localStorage.getItem("my-os-live-wallpaper") || "";
   });
+
+  const [wallpaperCode, setWallpaperCode] = useState("");
+  const [wallpaperCodeMessage, setWallpaperCodeMessage] = useState("");
+  const [unlockedWallpaperIds, setUnlockedWallpaperIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("my-os-unlocked-wallpapers") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [enterAnimationActive, setEnterAnimationActive] = useState(true);
 
   const [cursorStyle, setCursorStyle] = useState(() => {
     return localStorage.getItem("my-os-cursor") || "glow";
@@ -601,6 +643,55 @@ function App() {
   }, []);
 
   /* =========================
+     AETHER ENTER ANIMATION
+  ========================= */
+
+
+  useEffect(() => {
+    if (!enterAnimationActive) return;
+
+    function handleAetherEnterKey(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        setEnterAnimationActive(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleAetherEnterKey);
+
+    return () => {
+      window.removeEventListener("keydown", handleAetherEnterKey);
+    };
+  }, [enterAnimationActive]);
+
+  /* =========================
+     WALLPAPER CODE UNLOCKS
+  ========================= */
+
+  useEffect(() => {
+    localStorage.setItem(
+      "my-os-unlocked-wallpapers",
+      JSON.stringify(unlockedWallpaperIds)
+    );
+  }, [unlockedWallpaperIds]);
+
+  function unlockWallpaperCode() {
+    const code = wallpaperCode.trim().toUpperCase();
+    const unlocked = codeWallpapers[code];
+
+    if (!unlocked) {
+      setWallpaperCodeMessage("INVALID CODE");
+      return;
+    }
+
+    setUnlockedWallpaperIds((current) =>
+      current.includes(unlocked.id) ? current : [...current, unlocked.id]
+    );
+    setWallpaperCode("");
+    setWallpaperCodeMessage(`${unlocked.name.toUpperCase()} UNLOCKED`);
+  }
+
+  /* =========================
      SAVE PERSONALIZATION
   ========================= */
 
@@ -667,29 +758,46 @@ function App() {
 
     async function restoreMessagesSession() {
       try {
-        const response = await fetch("http://127.0.0.1:5001/api/me", {
-          headers: {
-            Authorization: `Bearer ${messagesToken}`,
-          },
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/api/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${messagesToken}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Session expired.");
         }
 
         const data = await response.json();
-        if (!cancelled) setMessagesAccount(data.user);
+
+        if (!cancelled) {
+          setMessagesAccount(data.user);
+        }
       } catch (error) {
         if (cancelled) return;
-        console.error("Could not restore Messages account:", error);
-        localStorage.removeItem("my-os-auth-token");
+
+        console.error(
+          "Could not restore Messages account:",
+          error
+        );
+
+        localStorage.removeItem(
+          "my-os-auth-token"
+        );
+
         setMessagesToken("");
         setMessagesAccount(null);
       }
     }
 
     restoreMessagesSession();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [messagesToken]);
 
   useEffect(() => {
@@ -712,7 +820,10 @@ function App() {
       return;
     }
 
-    if (messagesAuthMode === "signup" && password !== messagesAuthConfirm) {
+    if (
+      messagesAuthMode === "signup" &&
+      password !== messagesAuthConfirm
+    ) {
       setMessagesAuthError("Passwords do not match.");
       return;
     }
@@ -720,10 +831,13 @@ function App() {
     setMessagesAuthLoading(true);
 
     try {
-      const endpoint = messagesAuthMode === "signup" ? "signup" : "login";
+      const endpoint =
+        messagesAuthMode === "signup"
+          ? "signup"
+          : "login";
 
       const response = await fetch(
-        `http://127.0.0.1:5001/api/auth/${endpoint}`,
+        `${API_BASE_URL}/api/auth/${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -756,7 +870,7 @@ function App() {
     } catch (error) {
       setMessagesAuthError(
         error.message ||
-        "Could not connect to Aether OS accounts."
+          "Could not connect to Aether OS accounts."
       );
     } finally {
       setMessagesAuthLoading(false);
@@ -789,7 +903,9 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:5001/api/users/search?q=${encodeURIComponent(query)}`,
+        `${API_BASE_URL}/api/users/search?q=${encodeURIComponent(
+          query
+        )}`,
         {
           headers: {
             Authorization: `Bearer ${messagesToken}`,
@@ -811,23 +927,32 @@ function App() {
     } catch (error) {
       setMessagesAuthError(
         error.message ||
-        "Could not search users."
+          "Could not search users."
       );
     } finally {
       setUserSearchLoading(false);
     }
   }
 
-  function mergeOnlineConversation(remoteConversation) {
-    if (!remoteConversation?.id || !remoteConversation?.otherUser) return;
+  function mergeOnlineConversation(
+    remoteConversation
+  ) {
+    if (
+      !remoteConversation?.id ||
+      !remoteConversation?.otherUser
+    ) {
+      return;
+    }
 
     const onlineConversation = {
       id: remoteConversation.id,
       name:
         remoteConversation.otherUser.displayName ||
         remoteConversation.otherUser.username,
-      username: remoteConversation.otherUser.username,
-      status: `@${remoteConversation.otherUser.username} · ONLINE ACCOUNT`,
+      username:
+        remoteConversation.otherUser.username,
+      status:
+        `@${remoteConversation.otherUser.username} · ONLINE ACCOUNT`,
       unread: 0,
       messages: [],
       online: true,
@@ -835,33 +960,42 @@ function App() {
 
     setConversations((current) => {
       const existing = current.find(
-        (conversation) => conversation.id === onlineConversation.id
+        (conversation) =>
+          conversation.id ===
+          onlineConversation.id
       );
 
       if (existing) {
         return current.map((conversation) =>
-          conversation.id === onlineConversation.id
+          conversation.id ===
+          onlineConversation.id
             ? {
                 ...conversation,
                 ...onlineConversation,
-                messages: conversation.messages || [],
+                messages:
+                  conversation.messages || [],
               }
             : conversation
         );
       }
 
-      return [...current, onlineConversation];
+      return [
+        ...current,
+        onlineConversation,
+      ];
     });
   }
 
   async function loadOnlineConversations() {
-    if (!messagesToken || !messagesAccount) return;
+    if (!messagesToken || !messagesAccount) {
+      return;
+    }
 
     setOnlineConversationsLoading(true);
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5001/api/conversations",
+        `${API_BASE_URL}/api/conversations`,
         {
           headers: {
             Authorization: `Bearer ${messagesToken}`,
@@ -873,12 +1007,18 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Could not load conversations."
+          data.error ||
+            "Could not load conversations."
         );
       }
 
-      for (const conversation of data.conversations || []) {
-        mergeOnlineConversation(conversation);
+      for (
+        const conversation of
+        data.conversations || []
+      ) {
+        mergeOnlineConversation(
+          conversation
+        );
       }
     } catch (error) {
       console.error(
@@ -891,16 +1031,27 @@ function App() {
   }
 
   useEffect(() => {
-    if (!messagesAccount || !messagesToken) return;
+    if (!messagesAccount || !messagesToken) {
+      return;
+    }
+
     loadOnlineConversations();
   }, [messagesAccount?.id, messagesToken]);
 
-  async function loadOnlineMessages(conversationId) {
-    if (!messagesToken || !messagesAccount || !conversationId) return;
+  async function loadOnlineMessages(
+    conversationId
+  ) {
+    if (
+      !messagesToken ||
+      !messagesAccount ||
+      !conversationId
+    ) {
+      return;
+    }
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:5001/api/conversations/${conversationId}/messages`,
+        `${API_BASE_URL}/api/conversations/${conversationId}/messages`,
         {
           headers: {
             Authorization: `Bearer ${messagesToken}`,
@@ -911,14 +1062,25 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not load messages.");
+        throw new Error(
+          data.error ||
+            "Could not load messages."
+        );
       }
 
-      const remoteMessages = (data.messages || []).map((message) => ({
+      const remoteMessages = (
+        data.messages || []
+      ).map((message) => ({
         id: message.id,
-        sender: message.senderId === messagesAccount.id ? "me" : "them",
+        sender:
+          message.senderId ===
+          messagesAccount.id
+            ? "me"
+            : "them",
         text: message.content,
-        time: new Date(message.createdAt).toLocaleTimeString([], {
+        time: new Date(
+          message.createdAt
+        ).toLocaleTimeString([], {
           hour: "numeric",
           minute: "2-digit",
         }),
@@ -926,34 +1088,62 @@ function App() {
 
       setConversations((current) =>
         current.map((conversation) =>
-          conversation.id === conversationId && conversation.online
-            ? { ...conversation, messages: remoteMessages }
+          conversation.id ===
+            conversationId &&
+          conversation.online
+            ? {
+                ...conversation,
+                messages: remoteMessages,
+              }
             : conversation
         )
       );
     } catch (error) {
-      console.error("Could not load online messages:", error);
+      console.error(
+        "Could not load online messages:",
+        error
+      );
     }
   }
 
   useEffect(() => {
-    if (!messagesToken || !messagesAccount || !activeConversationId) return;
+    if (
+      !messagesToken ||
+      !messagesAccount ||
+      !activeConversationId
+    ) {
+      return;
+    }
 
-    const activeOnlineConversation = conversations.find(
-      (conversation) =>
-        conversation.id === activeConversationId && conversation.online
+    const activeOnlineConversation =
+      conversations.find(
+        (conversation) =>
+          conversation.id ===
+            activeConversationId &&
+          conversation.online
+      );
+
+    if (!activeOnlineConversation) {
+      return;
+    }
+
+    loadOnlineMessages(
+      activeConversationId
     );
 
-    if (!activeOnlineConversation) return;
-
-    loadOnlineMessages(activeConversationId);
-
     const messagePoll = setInterval(() => {
-      loadOnlineMessages(activeConversationId);
+      loadOnlineMessages(
+        activeConversationId
+      );
     }, 1500);
 
-    return () => clearInterval(messagePoll);
-  }, [activeConversationId, messagesToken, messagesAccount?.id]);
+    return () =>
+      clearInterval(messagePoll);
+  }, [
+    activeConversationId,
+    messagesToken,
+    messagesAccount?.id,
+  ]);
 
   async function startOnlineConversation(user) {
     if (!messagesToken || !user?.id) return;
@@ -963,7 +1153,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5001/api/conversations",
+        `${API_BASE_URL}/api/conversations`,
         {
           method: "POST",
           headers: {
@@ -980,12 +1170,19 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Could not start conversation."
+          data.error ||
+            "Could not start conversation."
         );
       }
 
-      mergeOnlineConversation(data.conversation);
-      setActiveConversationId(data.conversation.id);
+      mergeOnlineConversation(
+        data.conversation
+      );
+
+      setActiveConversationId(
+        data.conversation.id
+      );
+
       setUserSearch("");
       setUserSearchResults([]);
     } catch (error) {
@@ -995,7 +1192,8 @@ function App() {
       );
 
       setMessagesAuthError(
-        error.message || "Could not start conversation."
+        error.message ||
+          "Could not start conversation."
       );
     } finally {
       setUserSearchLoading(false);
@@ -1046,17 +1244,22 @@ function App() {
     setBrowserMinimized(false);
   }
 
-
   function openNeonTV() {
     const scramjet = getScramjet();
 
     if (!scramjet) {
-      console.error("Scramjet is not ready.");
+      console.error(
+        "Scramjet is not ready."
+      );
       return;
     }
 
     const url = "https://dulo.gd";
-    setNeonTVUrl(scramjet.encodeUrl(url));
+
+    setNeonTVUrl(
+      scramjet.encodeUrl(url)
+    );
+
     setNeonTVOpen(true);
   }
 
@@ -1218,7 +1421,9 @@ function App() {
     setBrowserOpen(true);
     setBrowserMinimized(false);
     setDesktopSearch("");
-  }  /* =========================
+  }
+
+  /* =========================
      BROWSER CONTROLS
   ========================= */
 
@@ -1349,22 +1554,60 @@ function App() {
      WINDOW MOVE / RESIZE
   ========================= */
 
-  function clampWindowRect(rect, minWidth, minHeight) {
-    const maxWidth = Math.max(minWidth, window.innerWidth);
-    const maxHeight = Math.max(minHeight, window.innerHeight - 72);
+  function clampWindowRect(
+    rect,
+    minWidth,
+    minHeight
+  ) {
+    const maxWidth = Math.max(
+      minWidth,
+      window.innerWidth
+    );
 
-    const width = Math.min(Math.max(rect.width, minWidth), maxWidth);
-    const height = Math.min(Math.max(rect.height, minHeight), maxHeight);
+    const maxHeight = Math.max(
+      minHeight,
+      window.innerHeight - 72
+    );
+
+    const width = Math.min(
+      Math.max(rect.width, minWidth),
+      maxWidth
+    );
+
+    const height = Math.min(
+      Math.max(rect.height, minHeight),
+      maxHeight
+    );
 
     return {
-      x: Math.min(Math.max(rect.x, 0), Math.max(0, window.innerWidth - width)),
-      y: Math.min(Math.max(rect.y, 0), Math.max(0, window.innerHeight - height)),
+      x: Math.min(
+        Math.max(rect.x, 0),
+        Math.max(
+          0,
+          window.innerWidth - width
+        )
+      ),
+      y: Math.min(
+        Math.max(rect.y, 0),
+        Math.max(
+          0,
+          window.innerHeight - height
+        )
+      ),
       width,
       height,
     };
   }
 
-  function beginWindowInteraction(event, type, edge, rect, setRect, minWidth, minHeight) {
+  function beginWindowInteraction(
+    event,
+    type,
+    edge,
+    rect,
+    setRect,
+    minWidth,
+    minHeight
+  ) {
     if (event.button !== 0) return;
 
     event.preventDefault();
@@ -1385,12 +1628,21 @@ function App() {
 
   useEffect(() => {
     function handleWindowPointerMove(event) {
-      const interaction = windowInteractionRef.current;
+      const interaction =
+        windowInteractionRef.current;
+
       if (!interaction) return;
 
-      const dx = event.clientX - interaction.startX;
-      const dy = event.clientY - interaction.startY;
-      const start = interaction.startRect;
+      const dx =
+        event.clientX -
+        interaction.startX;
+
+      const dy =
+        event.clientY -
+        interaction.startY;
+
+      const start =
+        interaction.startRect;
 
       if (interaction.type === "move") {
         interaction.setRect(
@@ -1404,6 +1656,7 @@ function App() {
             interaction.minHeight
           )
         );
+
         return;
       }
 
@@ -1411,35 +1664,55 @@ function App() {
       const edge = interaction.edge;
 
       if (edge.includes("e")) {
-        next.width = start.width + dx;
+        next.width =
+          start.width + dx;
       }
 
       if (edge.includes("s")) {
-        next.height = start.height + dy;
+        next.height =
+          start.height + dy;
       }
 
       if (edge.includes("w")) {
         next.x = start.x + dx;
-        next.width = start.width - dx;
+        next.width =
+          start.width - dx;
       }
 
       if (edge.includes("n")) {
         next.y = start.y + dy;
-        next.height = start.height - dy;
+        next.height =
+          start.height - dy;
       }
 
-      if (next.width < interaction.minWidth) {
+      if (
+        next.width <
+        interaction.minWidth
+      ) {
         if (edge.includes("w")) {
-          next.x = start.x + start.width - interaction.minWidth;
+          next.x =
+            start.x +
+            start.width -
+            interaction.minWidth;
         }
-        next.width = interaction.minWidth;
+
+        next.width =
+          interaction.minWidth;
       }
 
-      if (next.height < interaction.minHeight) {
+      if (
+        next.height <
+        interaction.minHeight
+      ) {
         if (edge.includes("n")) {
-          next.y = start.y + start.height - interaction.minHeight;
+          next.y =
+            start.y +
+            start.height -
+            interaction.minHeight;
         }
-        next.height = interaction.minHeight;
+
+        next.height =
+          interaction.minHeight;
       }
 
       interaction.setRect(
@@ -1452,35 +1725,84 @@ function App() {
     }
 
     function endWindowInteraction() {
-      if (!windowInteractionRef.current) return;
+      if (
+        !windowInteractionRef.current
+      ) {
+        return;
+      }
 
-      windowInteractionRef.current = null;
+      windowInteractionRef.current =
+        null;
+
       setWindowInteractionActive(false);
       setResizeHoverEdge("");
     }
 
-    window.addEventListener("pointermove", handleWindowPointerMove);
-    window.addEventListener("pointerup", endWindowInteraction);
-    window.addEventListener("pointercancel", endWindowInteraction);
+    window.addEventListener(
+      "pointermove",
+      handleWindowPointerMove
+    );
+
+    window.addEventListener(
+      "pointerup",
+      endWindowInteraction
+    );
+
+    window.addEventListener(
+      "pointercancel",
+      endWindowInteraction
+    );
 
     return () => {
-      window.removeEventListener("pointermove", handleWindowPointerMove);
-      window.removeEventListener("pointerup", endWindowInteraction);
-      window.removeEventListener("pointercancel", endWindowInteraction);
+      window.removeEventListener(
+        "pointermove",
+        handleWindowPointerMove
+      );
+
+      window.removeEventListener(
+        "pointerup",
+        endWindowInteraction
+      );
+
+      window.removeEventListener(
+        "pointercancel",
+        endWindowInteraction
+      );
     };
   }, []);
 
-  function renderResizeHandles(rect, setRect, minWidth, minHeight, disabled = false) {
+  function renderResizeHandles(
+    rect,
+    setRect,
+    minWidth,
+    minHeight,
+    disabled = false
+  ) {
     if (disabled) return null;
 
-    return ["n", "e", "s", "w", "ne", "nw", "se", "sw"].map((edge) => (
+    return [
+      "n",
+      "e",
+      "s",
+      "w",
+      "ne",
+      "nw",
+      "se",
+      "sw",
+    ].map((edge) => (
       <div
         key={edge}
         className={`window-resize-handle resize-${edge} ${
-          resizeHoverEdge === edge ? "resize-hovered" : ""
+          resizeHoverEdge === edge
+            ? "resize-hovered"
+            : ""
         }`}
-        onPointerEnter={() => setResizeHoverEdge(edge)}
-        onPointerLeave={() => setResizeHoverEdge("")}
+        onPointerEnter={() =>
+          setResizeHoverEdge(edge)
+        }
+        onPointerLeave={() =>
+          setResizeHoverEdge("")
+        }
         onPointerDown={(event) => {
           setResizeHoverEdge(edge);
 
@@ -1546,8 +1868,12 @@ function App() {
 
     setConversations((current) =>
       current.map((conversation) =>
-        conversation.id === activeConversationId
-          ? { ...conversation, unread: 0 }
+        conversation.id ===
+        activeConversationId
+          ? {
+              ...conversation,
+              unread: 0,
+            }
           : conversation
       )
     );
@@ -1562,13 +1888,21 @@ function App() {
     setMessagesMinimized(false);
   }
 
-  function selectConversation(conversationId) {
-    setActiveConversationId(conversationId);
+  function selectConversation(
+    conversationId
+  ) {
+    setActiveConversationId(
+      conversationId
+    );
 
     setConversations((current) =>
       current.map((conversation) =>
-        conversation.id === conversationId
-          ? { ...conversation, unread: 0 }
+        conversation.id ===
+        conversationId
+          ? {
+              ...conversation,
+              unread: 0,
+            }
           : conversation
       )
     );
@@ -1579,10 +1913,12 @@ function App() {
 
     if (!text) return;
 
-    const currentConversation = conversations.find(
-      (conversation) =>
-        conversation.id === activeConversationId
-    );
+    const currentConversation =
+      conversations.find(
+        (conversation) =>
+          conversation.id ===
+          activeConversationId
+      );
 
     if (!currentConversation) return;
 
@@ -1597,12 +1933,14 @@ function App() {
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:5001/api/conversations/${activeConversationId}/messages`,
+          `${API_BASE_URL}/api/conversations/${activeConversationId}/messages`,
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${messagesToken}`,
+              "Content-Type":
+                "application/json",
+              Authorization:
+                `Bearer ${messagesToken}`,
             },
             body: JSON.stringify({
               content: text,
@@ -1610,11 +1948,13 @@ function App() {
           }
         );
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
         if (!response.ok) {
           throw new Error(
-            data.error || "Could not send message."
+            data.error ||
+              "Could not send message."
           );
         }
 
@@ -1645,7 +1985,8 @@ function App() {
 
     setConversations((current) =>
       current.map((conversation) =>
-        conversation.id === activeConversationId
+        conversation.id ===
+        activeConversationId
           ? {
               ...conversation,
               messages: [
@@ -1745,10 +2086,18 @@ function App() {
       day: "numeric",
     });
 
+  const unlockedCodeWallpapers = Object.values(codeWallpapers).filter(
+    (wallpaper) => unlockedWallpaperIds.includes(wallpaper.id)
+  );
+
+  const availableLiveWallpapers = [
+    ...liveWallpapers,
+    ...unlockedCodeWallpapers,
+  ];
+
   const activeLiveWallpaper =
-    liveWallpapers.find(
-      (wallpaper) =>
-        wallpaper.id === liveWallpaper
+    availableLiveWallpapers.find(
+      (wallpaper) => wallpaper.id === liveWallpaper
     ) || null;
 
   return (
@@ -1763,6 +2112,76 @@ function App() {
           : ""
       }`}
     >
+      {enterAnimationActive && (
+        <div className="aether-enter-screen">
+          <div className="aether-enter-core">
+            <div className="aether-enter-ring aether-enter-ring-one"></div>
+            <div className="aether-enter-ring aether-enter-ring-two"></div>
+            <div className="aether-enter-mark">A</div>
+          </div>
+          <div className="aether-enter-title">AETHER OS</div>
+          <div className="aether-enter-status">SYSTEM READY · PRESS ENTER</div>
+          <div className="aether-enter-loader"><span></span></div>
+          <button
+            type="button"
+            className="aether-enter-button"
+            onClick={() => setEnterAnimationActive(false)}
+          >
+            ENTER
+          </button>
+        </div>
+      )}
+
+      {!activeLiveWallpaper && background === "grid" && (
+        <div className="cyber-grid-remake" aria-hidden="true">
+          <div className="cyber-grid-sky-glow"></div>
+          <div className="cyber-grid-floor">
+            <div className="cyber-grid-plane">
+              {cyberGridLines.map((line) => (
+                <span
+                  key={`grid-h-${line}`}
+                  className="cyber-grid-line cyber-grid-line-horizontal"
+                  style={{ "--grid-index": line }}
+                ></span>
+              ))}
+
+              {cyberGridColumns.map((column) => (
+                <span
+                  key={`grid-v-${column}`}
+                  className="cyber-grid-line cyber-grid-line-vertical"
+                  style={{ "--grid-index": column }}
+                ></span>
+              ))}
+            </div>
+          </div>
+          <div className="cyber-grid-horizon"></div>
+          <div className="cyber-grid-scan"></div>
+        </div>
+      )}
+
+      {!activeLiveWallpaper && background === "matrix" && (
+        <div className="matrix-rain-remake" aria-hidden="true">
+          <div className="matrix-rain-glow"></div>
+
+          {matrixColumns.map((column) => (
+            <span
+              key={column.id}
+              className="matrix-rain-column"
+              style={{
+                left: column.left,
+                animationDelay: column.delay,
+                animationDuration: column.duration,
+                opacity: column.opacity,
+              }}
+            >
+              {column.text}
+            </span>
+          ))}
+
+          <div className="matrix-rain-scan"></div>
+        </div>
+      )}
+
       {activeLiveWallpaper && (
         <div
           className="live-wallpaper-layer"
@@ -1771,13 +2190,21 @@ function App() {
           <video
             key={activeLiveWallpaper.src}
             className="live-wallpaper-video"
-            src={activeLiveWallpaper.src}
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
-          />
+            onError={(event) => {
+              console.error(
+                "Aether wallpaper video failed to load:",
+                activeLiveWallpaper.src,
+                event.currentTarget.error
+              );
+            }}
+          >
+            <source src={activeLiveWallpaper.src} type="video/mp4" />
+          </video>
 
           <div className="live-wallpaper-shade"></div>
         </div>
@@ -2082,7 +2509,9 @@ function App() {
             >
               +
             </button>
-          </div>          <div className="browser-bar">
+          </div>
+
+          <div className="browser-bar">
             <button onClick={goBack}>
               ←
             </button>
@@ -3053,7 +3482,40 @@ function App() {
               </div>
 
               <div className="option-grid live-wallpaper-grid">
-                {liveWallpapers.map((wallpaperOption) => (
+                <div className="wallpaper-code-panel">
+                  <div className="wallpaper-code-copy">
+                    <strong>WALLPAPER CODE</strong>
+                    <small>Enter an Aether wallpaper unlock code.</small>
+                  </div>
+                  <div className="wallpaper-code-entry">
+                    <input
+                      type="text"
+                      value={wallpaperCode}
+                      placeholder="ENTER CODE"
+                      autoComplete="off"
+                      spellCheck="false"
+                      onChange={(event) => {
+                        setWallpaperCode(event.target.value);
+                        setWallpaperCodeMessage("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") unlockWallpaperCode();
+                      }}
+                    />
+                    <button type="button" onClick={unlockWallpaperCode}>
+                      UNLOCK
+                    </button>
+                  </div>
+                  {wallpaperCodeMessage && (
+                    <span className={`wallpaper-code-message ${
+                      wallpaperCodeMessage === "INVALID CODE" ? "error" : "success"
+                    }`}>
+                      {wallpaperCodeMessage}
+                    </span>
+                  )}
+                </div>
+
+                {availableLiveWallpapers.map((wallpaperOption) => (
                   <button
                     key={wallpaperOption.id}
                     className={
@@ -3290,9 +3752,7 @@ function App() {
 
       {/* =====================
           START MENU
-      ====================== */}
-
-      {startMenuOpen && (
+      ====================== */}      {startMenuOpen && (
         <>
           <button
             className="start-menu-backdrop"
@@ -3361,7 +3821,9 @@ function App() {
                     ) : (
                       <span className="start-app-icon">{app.icon}</span>
                     )}
+
                     <strong>{app.name}</strong>
+
                     {!app.ready && <small>COMING SOON</small>}
                   </button>
                 ))}
@@ -3370,6 +3832,7 @@ function App() {
             <div className="start-menu-footer">
               <div className="start-user">
                 <span className="start-avatar">J</span>
+
                 <div>
                   <strong>AETHER OS USER</strong>
                   <small>LOCAL SESSION</small>
@@ -3389,7 +3852,10 @@ function App() {
       )}
 
       {windowInteractionActive && (
-        <div className="window-interaction-shield" aria-hidden="true"></div>
+        <div
+          className="window-interaction-shield"
+          aria-hidden="true"
+        ></div>
       )}
 
       {/* =====================
@@ -3404,10 +3870,15 @@ function App() {
           aria-label="Open Start menu"
         >
           <span className="myos-start-icon" aria-hidden="true">
-            <span></span><span></span><span></span><span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
           </span>
+
           <span className="taskbar-label">Start</span>
         </button>
+
         <button
           onClick={openBrowser}
           title="Browser"
@@ -3425,12 +3896,14 @@ function App() {
           )}
         </button>
 
-
         <button
           onClick={openNeonTV}
           title="Aether TV"
         >
-          <span className="taskbar-icon neon-tv-icon" aria-hidden="true">
+          <span
+            className="taskbar-icon neon-tv-icon"
+            aria-hidden="true"
+          >
             <span className="neon-tv-screen">
               <span className="neon-tv-play"></span>
             </span>

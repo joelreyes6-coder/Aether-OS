@@ -1061,14 +1061,20 @@ fastify.server.on(
    START SERVER
 ========================================================= */
 
+const PORT = Number(process.env.PORT) || 5001;
+
+const HOST = process.env.RENDER
+  ? "0.0.0.0"
+  : "127.0.0.1";
+
 try {
   await fastify.listen({
-    port: 5001,
-    host: "127.0.0.1",
+    port: PORT,
+    host: HOST,
   });
 
   console.log(
-    "Aether OS server running on http://127.0.0.1:5001"
+    `Aether OS server running on ${HOST}:${PORT}`
   );
 
   console.log(
