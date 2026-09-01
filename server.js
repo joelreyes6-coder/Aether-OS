@@ -304,9 +304,23 @@ fastify.post("/api/auth/login", async (request, reply) => {
     });
   }
 
+  if (
+    typeof profile.password_hash !== "string" ||
+    !profile.password_hash.startsWith("$2")
+  ) {
+    request.log.error(
+      { userId: profile.id },
+      "Account has an invalid password hash."
+    );
+
+    return reply.code(401).send({
+      error: "Invalid username or password.",
+    });
+  }
+
   const passwordMatches = await bcrypt.compare(
     password,
-    profile.password_hash
+    profile.password_hash.trim()
   );
 
   if (!passwordMatches) {
@@ -374,9 +388,7 @@ fastify.get(
       },
     };
   }
-);
-
-/* =========================================================
+);/* =========================================================
    USER SEARCH
 ========================================================= */
 
@@ -701,7 +713,9 @@ fastify.get(
         error:
           "Could not load conversation members.",
       });
-    }    const otherUserIds = [
+    }
+
+    const otherUserIds = [
       ...new Set(
         (allMembers || []).map(
           (membership) =>
@@ -792,9 +806,7 @@ fastify.get(
       }),
     };
   }
-);
-
-/* =========================================================
+);/* =========================================================
    CONVERSATION MESSAGES
 ========================================================= */
 
