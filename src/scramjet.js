@@ -19,6 +19,65 @@ function getWispUrl() {
   return `${protocol}//${window.location.host}/`;
 }
 
+function waitForServiceWorker(registration) {
+  if (registration.active) {
+    return Promise.resolve();
+  }
+
+  const worker =
+    registration.installing ||
+    registration.waiting;
+
+  if (!worker) {
+    return Promise.reject(
+      new Error(
+        "Scramjet service worker was not found."
+      )
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(
+        new Error(
+          "Timed out waiting for Scramjet service worker."
+        )
+      );
+    }, 10000);
+
+    function handleStateChange() {
+      if (worker.state === "activated") {
+        clearTimeout(timeout);
+        worker.removeEventListener(
+          "statechange",
+          handleStateChange
+        );
+        resolve();
+      }
+
+      if (worker.state === "redundant") {
+        clearTimeout(timeout);
+        worker.removeEventListener(
+          "statechange",
+          handleStateChange
+        );
+        reject(
+          new Error(
+            "Scramjet service worker became redundant."
+          )
+        );
+      }
+    }
+
+    worker.addEventListener(
+      "statechange",
+      handleStateChange
+    );
+
+    handleStateChange();
+  });
+}
+
 export async function setupBareMux() {
   const connection = new BareMuxConnection(
     "/baremux-worker.js"
@@ -46,7 +105,7 @@ export async function setupScramjet() {
       scope: "/scramjet/",
     });
 
-  await navigator.serviceWorker.ready;
+  await waitForServiceWorker(registration);
 
   if (!globalThis.$scramjetLoadController) {
     throw new Error(
@@ -57,7 +116,7 @@ export async function setupScramjet() {
   const { ScramjetController } =
     globalThis.$scramjetLoadController();
 
-  scramjet = new ScramjetController({
+  const controller = new ScramjetController({
     prefix: "/scramjet/",
 
     files: {
@@ -67,7 +126,9 @@ export async function setupScramjet() {
     },
   });
 
-  await scramjet.init();
+  await controller.init();
+
+  scramjet = controller;
 
   return scramjet;
 }
