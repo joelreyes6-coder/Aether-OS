@@ -7,23 +7,46 @@ import {
 const scramjet = new ScramjetServiceWorker();
 
 let initializedConfig = null;
+let configReadyPromise = null;
 
 async function ensureScramjetConfig() {
-  if (!scramjet.config) {
-    await scramjet.loadConfig();
+  if (scramjet.config) {
+    if (initializedConfig !== scramjet.config) {
+      setConfig(scramjet.config);
+      await loadCodecs();
+      initializedConfig = scramjet.config;
+    }
+
+    return true;
   }
 
-  if (!scramjet.config) {
-    return false;
+  if (!configReadyPromise) {
+    configReadyPromise = (async () => {
+      try {
+        await scramjet.loadConfig();
+
+        if (!scramjet.config) {
+          return false;
+        }
+
+        setConfig(scramjet.config);
+        await loadCodecs();
+
+        initializedConfig = scramjet.config;
+
+        return true;
+      } catch (error) {
+        console.error(
+          "Scramjet service worker config failed:",
+          error
+        );
+
+        return false;
+      }
+    })();
   }
 
-  if (initializedConfig !== scramjet.config) {
-    setConfig(scramjet.config);
-    await loadCodecs();
-    initializedConfig = scramjet.config;
-  }
-
-  return true;
+  return configReadyPromise;
 }
 
 self.addEventListener("fetch", (event) => {
