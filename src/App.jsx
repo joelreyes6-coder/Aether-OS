@@ -2883,9 +2883,13 @@ function App() {
                   )}
 
                   <button
+                    type="button"
                     className="messages-auth-submit"
                     disabled={
                       messagesAuthLoading
+                    }
+                    onClick={
+                      submitMessagesAuth
                     }
                   >
                     {messagesAuthLoading
