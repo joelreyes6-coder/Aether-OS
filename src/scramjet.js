@@ -3,14 +3,8 @@ import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
 let scramjet = null;
 
 const SCRAMJET_DB_NAME = "$scramjet";
-
-const SCRAMJET_REQUIRED_STORES = [
-  "config",
-  "cookies",
-  "redirectTrackers",
-  "referrerPolicies",
-  "publicSuffixList",
-];
+const SCRAMJET_REPAIR_KEY =
+  "my-os-scramjet-repair-attempted";
 
 function getWispUrl() {
   const isLocal =
@@ -29,117 +23,141 @@ function getWispUrl() {
   return `${protocol}//${window.location.host}/`;
 }
 
+function isMissingObjectStoreError(error) {
+  if (!error) {
+    return false;
+  }
+
+  const name = String(error.name || "");
+  const message = String(error.message || "");
+
+  return (
+    name === "NotFoundError" &&
+    message
+      .toLowerCase()
+      .includes("object store")
+  );
+}
+
+async function unregisterScramjetServiceWorkers() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  const registrations =
+    await navigator.serviceWorker.getRegistrations();
+
+  for (const registration of registrations) {
+    const scope = registration.scope || "";
+
+    if (scope.includes("/scramjet/")) {
+      console.warn(
+        "Unregistering broken Scramjet service worker."
+      );
+
+      await registration.unregister();
+    }
+  }
+}
+
 function deleteScramjetDatabase() {
   return new Promise((resolve, reject) => {
     const request =
       indexedDB.deleteDatabase(SCRAMJET_DB_NAME);
 
+    let finished = false;
+
+    const timeout = setTimeout(() => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+
+      reject(
+        new Error(
+          "Timed out deleting the Scramjet database."
+        )
+      );
+    }, 5000);
+
     request.onsuccess = () => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      clearTimeout(timeout);
+
       console.log(
-        "Removed invalid Scramjet IndexedDB database."
+        "Broken Scramjet IndexedDB database deleted."
       );
 
       resolve();
     };
 
     request.onerror = () => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      clearTimeout(timeout);
+
       reject(
         request.error ||
           new Error(
-            "Could not delete invalid Scramjet database."
+            "Could not delete the broken Scramjet database."
           )
       );
     };
 
     request.onblocked = () => {
       console.warn(
-        "Scramjet database deletion is temporarily blocked."
+        "Scramjet database deletion is blocked. Waiting for existing connections to close."
       );
     };
   });
 }
 
-function inspectScramjetDatabase() {
-  return new Promise((resolve, reject) => {
-    let databaseWasCreated = false;
-
-    const request =
-      indexedDB.open(SCRAMJET_DB_NAME);
-
-    request.onupgradeneeded = (event) => {
-      if (event.oldVersion === 0) {
-        databaseWasCreated = true;
-      }
-    };
-
-    request.onerror = () => {
-      reject(
-        request.error ||
-          new Error(
-            "Could not inspect Scramjet database."
-          )
-      );
-    };
-
-    request.onsuccess = () => {
-      const database = request.result;
-
-      const missingStores =
-        SCRAMJET_REQUIRED_STORES.filter(
-          (storeName) =>
-            !database.objectStoreNames.contains(
-              storeName
-            )
-        );
-
-      database.close();
-
-      resolve({
-        databaseWasCreated,
-        missingStores,
-      });
-    };
-  });
-}
-
-async function repairScramjetDatabase() {
-  if (!("indexedDB" in window)) {
-    return;
-  }
-
-  try {
-    const {
-      databaseWasCreated,
-      missingStores,
-    } = await inspectScramjetDatabase();
-
-    /*
-     * If our inspection created the database, it is
-     * empty and Scramjet needs to create its own
-     * correctly structured database.
-     *
-     * If an existing database is missing any required
-     * stores, remove it so Scramjet can rebuild it.
-     */
-    if (
-      databaseWasCreated ||
-      missingStores.length > 0
-    ) {
-      if (missingStores.length > 0) {
-        console.warn(
-          "Invalid Scramjet IndexedDB schema. Missing:",
-          missingStores
-        );
-      }
-
-      await deleteScramjetDatabase();
-    }
-  } catch (error) {
-    console.warn(
-      "Scramjet IndexedDB preflight failed:",
-      error
+async function repairBrokenScramjetDatabase() {
+  /*
+   * Only repair once per browser session.
+   * This prevents an infinite reload loop if
+   * something other than IndexedDB is broken.
+   */
+  if (
+    sessionStorage.getItem(
+      SCRAMJET_REPAIR_KEY
+    ) === "1"
+  ) {
+    console.error(
+      "Scramjet repair was already attempted during this session."
     );
+
+    return false;
   }
+
+  sessionStorage.setItem(
+    SCRAMJET_REPAIR_KEY,
+    "1"
+  );
+
+  console.warn(
+    "Scramjet has a broken IndexedDB schema. Starting automatic repair."
+  );
+
+  await unregisterScramjetServiceWorkers();
+
+  await deleteScramjetDatabase();
+
+  console.log(
+    "Scramjet repair complete. Reloading Aether OS."
+  );
+
+  window.location.reload();
+
+  return true;
 }
 
 function waitForServiceWorker(registration) {
@@ -229,13 +247,6 @@ export async function setupScramjet() {
     );
   }
 
-  /*
-   * IMPORTANT:
-   * Repair the database BEFORE registering /
-   * initializing Scramjet.
-   */
-  await repairScramjetDatabase();
-
   const registration =
     await navigator.serviceWorker.register(
       "/sw.js",
@@ -267,7 +278,36 @@ export async function setupScramjet() {
       },
     });
 
-  await controller.init();
+  try {
+    await controller.init();
+  } catch (error) {
+    if (isMissingObjectStoreError(error)) {
+      try {
+        const repairing =
+          await repairBrokenScramjetDatabase();
+
+        if (repairing) {
+          return null;
+        }
+      } catch (repairError) {
+        console.error(
+          "Automatic Scramjet repair failed:",
+          repairError
+        );
+      }
+    }
+
+    throw error;
+  }
+
+  /*
+   * Successful initialization means the database is
+   * healthy again. Clear the loop guard so a future
+   * genuine corruption can also be repaired.
+   */
+  sessionStorage.removeItem(
+    SCRAMJET_REPAIR_KEY
+  );
 
   scramjet = controller;
 
