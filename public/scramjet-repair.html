@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Aether OS Repair</title>
+
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #05070c;
+      color: #ffffff;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    }
+
+    .repair {
+      text-align: center;
+    }
+
+    .repair-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .repair-status {
+      margin-top: 12px;
+
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="repair">
+    <div class="repair-title">
+      AETHER OS
+    </div>
+
+    <div
+      id="repair-status"
+      class="repair-status"
+    >
+      Repairing browser engine...
+    </div>
+  </div>
+
+  <script>
+    const SCRAMJET_DB_NAME =
+      "$scramjet";
+
+    const SCRAMJET_REPAIR_KEY =
+      "my-os-scramjet-repair-attempted";
+
+    const SCRAMJET_RETURN_KEY =
+      "my-os-scramjet-repair-return";
+
+    const statusElement =
+      document.getElementById(
+        "repair-status"
+      );
+
+    function wait(milliseconds) {
+      return new Promise(
+        (resolve) => {
+          setTimeout(
+            resolve,
+            milliseconds
+          );
+        }
+      );
+    }
+
+    async function unregisterScramjet() {
+      if (
+        !(
+          "serviceWorker" in
+          navigator
+        )
+      ) {
+        return;
+      }
+
+      const registrations =
+        await navigator.serviceWorker
+          .getRegistrations();
+
+      for (
+        const registration
+        of registrations
+      ) {
+        const scope =
+          registration.scope ||
+          "";
+
+        if (
+          scope.includes(
+            "/scramjet/"
+          )
+        ) {
+          console.log(
+            "Repair page unregistering Scramjet service worker."
+          );
+
+          await registration.unregister();
+        }
+      }
+    }
+
+    function deleteScramjetDatabase() {
+      return new Promise(
+        (resolve, reject) => {
+          const request =
+            indexedDB.deleteDatabase(
+              SCRAMJET_DB_NAME
+            );
+
+          let completed =
+            false;
+
+          const timeout =
+            setTimeout(() => {
+              if (completed) {
+                return;
+              }
+
+              completed = true;
+
+              reject(
+                new Error(
+                  "Timed out deleting Scramjet IndexedDB."
+                )
+              );
+            }, 12000);
+
+          request.onsuccess =
+            () => {
+              if (
+                completed
+              ) {
+                return;
+              }
+
+              completed =
+                true;
+
+              clearTimeout(
+                timeout
+              );
+
+              console.log(
+                "Scramjet IndexedDB deleted."
+              );
+
+              resolve();
+            };
+
+          request.onerror =
+            () => {
+              if (
+                completed
+              ) {
+                return;
+              }
+
+              completed =
+                true;
+
+              clearTimeout(
+                timeout
+              );
+
+              reject(
+                request.error ||
+                  new Error(
+                    "Could not delete Scramjet IndexedDB."
+                  )
+              );
+            };
+
+          request.onblocked =
+            () => {
+              console.warn(
+                "Scramjet IndexedDB deletion is blocked. Waiting for connections to close."
+              );
+
+              statusElement.textContent =
+                "Waiting for browser engine to close...";
+            };
+        }
+      );
+    }
+
+    async function repair() {
+      try {
+        statusElement.textContent =
+          "Closing browser engine...";
+
+        await unregisterScramjet();
+
+        /*
+         * The previous Aether page needs time to fully
+         * unload and release its IndexedDB connections.
+         *
+         * Our manual test showed deletion succeeds
+         * once Aether is no longer running.
+         */
+        await wait(2500);
+
+        statusElement.textContent =
+          "Clearing damaged browser data...";
+
+        await deleteScramjetDatabase();
+
+        statusElement.textContent =
+          "Repair complete. Restarting Aether OS...";
+
+        console.log(
+          "Scramjet automatic repair completed."
+        );
+
+        await wait(500);
+
+        const returnUrl =
+          sessionStorage.getItem(
+            SCRAMJET_RETURN_KEY
+          );
+
+        /*
+         * Keep the attempted flag during the first
+         * reload. setupScramjet() clears it after a
+         * successful initialization.
+         */
+        sessionStorage.removeItem(
+          SCRAMJET_RETURN_KEY
+        );
+
+        if (
+          returnUrl &&
+          returnUrl.startsWith(
+            window.location.origin
+          )
+        ) {
+          window.location.replace(
+            returnUrl
+          );
+
+          return;
+        }
+
+        window.location.replace(
+          "/"
+        );
+      } catch (error) {
+        console.error(
+          "Scramjet repair page failed:",
+          error
+        );
+
+        sessionStorage.removeItem(
+          SCRAMJET_REPAIR_KEY
+        );
+
+        statusElement.textContent =
+          "Repair failed. Refresh Aether OS and try again.";
+      }
+    }
+
+    repair();
+  </script>
+</body>
+</html>
