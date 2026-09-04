@@ -1205,78 +1205,6 @@ function App() {
   ========================= */
 
   useEffect(() => {
-    const scramjetRepairKey =
-      "my-os-scramjet-repair-attempted";
-
-    function deleteScramjetDatabase() {
-      return new Promise((resolve, reject) => {
-        const request =
-          indexedDB.deleteDatabase("$scramjet");
-
-        request.onsuccess = () => {
-          console.log(
-            "Scramjet IndexedDB repaired."
-          );
-
-          resolve();
-        };
-
-        request.onerror = () => {
-          reject(
-            request.error ||
-              new Error(
-                "Could not delete Scramjet IndexedDB."
-              )
-          );
-        };
-
-        request.onblocked = () => {
-          console.warn(
-            "Scramjet IndexedDB repair is blocked. Close other Aether tabs."
-          );
-        };
-      });
-    }
-
-    function isMissingScramjetStoreError(error) {
-      const errorName =
-        error?.name || "";
-
-      const errorMessage =
-        error?.message || "";
-
-      return (
-        errorName === "NotFoundError" &&
-        errorMessage.includes(
-          "object store"
-        )
-      );
-    }
-
-    async function repairScramjetDatabase() {
-      if (
-        "serviceWorker" in navigator
-      ) {
-        try {
-          const registration =
-            await navigator.serviceWorker.getRegistration(
-              "/scramjet/"
-            );
-
-          if (registration) {
-            await registration.unregister();
-          }
-        } catch (error) {
-          console.warn(
-            "Could not unregister Scramjet service worker during repair:",
-            error
-          );
-        }
-      }
-
-      await deleteScramjetDatabase();
-    }
-
     async function startProxy() {
       try {
         await setupBareMux();
@@ -1289,10 +1217,6 @@ function App() {
 
         await setupScramjet();
 
-        sessionStorage.removeItem(
-          scramjetRepairKey
-        );
-
         setScramjetStatus("Ready");
 
         console.log(
@@ -1303,43 +1227,6 @@ function App() {
           "Startup failed:",
           error
         );
-
-        const alreadyAttemptedRepair =
-          sessionStorage.getItem(
-            scramjetRepairKey
-          ) === "1";
-
-        if (
-          isMissingScramjetStoreError(
-            error
-          ) &&
-          !alreadyAttemptedRepair
-        ) {
-          sessionStorage.setItem(
-            scramjetRepairKey,
-            "1"
-          );
-
-          setScramjetStatus(
-            "Repairing..."
-          );
-
-          console.warn(
-            "Scramjet IndexedDB is missing an object store. Repairing automatically..."
-          );
-
-          try {
-            await repairScramjetDatabase();
-
-            window.location.reload();
-            return;
-          } catch (repairError) {
-            console.error(
-              "Automatic Scramjet repair failed:",
-              repairError
-            );
-          }
-        }
 
         setScramjetStatus("Failed");
       }
