@@ -2,11 +2,16 @@ import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
 
 let scramjet = null;
 
-const SCRAMJET_REPAIR_KEY =
-  "my-os-scramjet-repair-attempted";
+const SCRAMJET_DB_NAME =
+  "$scramjet";
 
-const SCRAMJET_RETURN_KEY =
-  "my-os-scramjet-repair-return";
+const SCRAMJET_STORES = [
+  "config",
+  "cookies",
+  "redirectTrackers",
+  "referrerPolicies",
+  "publicSuffixList",
+];
 
 function getWispUrl() {
   const isLocal =
@@ -25,57 +30,248 @@ function getWispUrl() {
   return `${protocol}//${window.location.host}/`;
 }
 
-function isMissingObjectStoreError(error) {
-  if (!error) {
-    return false;
+function wait(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+async function unregisterScramjetServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
   }
 
-  const name = String(
-    error.name || ""
-  );
+  const registrations =
+    await navigator.serviceWorker.getRegistrations();
 
-  const message = String(
-    error.message || ""
-  ).toLowerCase();
+  for (const registration of registrations) {
+    if (
+      registration.scope.includes(
+        "/scramjet/"
+      )
+    ) {
+      await registration.unregister();
+    }
+  }
+}
 
-  return (
-    name === "NotFoundError" &&
-    message.includes("object store")
+function deleteScramjetDatabase() {
+  return new Promise(
+    (resolve, reject) => {
+      const request =
+        indexedDB.deleteDatabase(
+          SCRAMJET_DB_NAME
+        );
+
+      const timeout =
+        setTimeout(() => {
+          reject(
+            new Error(
+              "Timed out deleting broken Scramjet database."
+            )
+          );
+        }, 10000);
+
+      request.onsuccess = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+
+      request.onerror = () => {
+        clearTimeout(timeout);
+
+        reject(
+          request.error ||
+            new Error(
+              "Could not delete broken Scramjet database."
+            )
+        );
+      };
+
+      request.onblocked = () => {
+        console.warn(
+          "Waiting for old Scramjet database connections to close..."
+        );
+      };
+    }
   );
 }
 
-function startScramjetRepair() {
-  if (
-    sessionStorage.getItem(
-      SCRAMJET_REPAIR_KEY
-    ) === "1"
-  ) {
-    console.error(
-      "Scramjet repair was already attempted during this session."
-    );
+function createScramjetDatabase() {
+  return new Promise(
+    (resolve, reject) => {
+      const request =
+        indexedDB.open(
+          SCRAMJET_DB_NAME,
+          1
+        );
 
-    return false;
+      request.onupgradeneeded =
+        () => {
+          const db =
+            request.result;
+
+          for (
+            const storeName
+            of SCRAMJET_STORES
+          ) {
+            if (
+              !db.objectStoreNames.contains(
+                storeName
+              )
+            ) {
+              db.createObjectStore(
+                storeName
+              );
+            }
+          }
+        };
+
+      request.onsuccess = () => {
+        const db =
+          request.result;
+
+        const stores =
+          [...db.objectStoreNames];
+
+        const valid =
+          SCRAMJET_STORES.every(
+            (storeName) =>
+              stores.includes(
+                storeName
+              )
+          );
+
+        db.close();
+
+        if (!valid) {
+          reject(
+            new Error(
+              "Scramjet database schema is incomplete."
+            )
+          );
+
+          return;
+        }
+
+        resolve();
+      };
+
+      request.onerror = () => {
+        reject(
+          request.error ||
+            new Error(
+              "Could not initialize Scramjet database."
+            )
+        );
+      };
+    }
+  );
+}
+
+async function ensureScramjetDatabase() {
+  let existingDatabase = null;
+
+  if (
+    typeof indexedDB.databases ===
+    "function"
+  ) {
+    const databases =
+      await indexedDB.databases();
+
+    existingDatabase =
+      databases.find(
+        (database) =>
+          database.name ===
+          SCRAMJET_DB_NAME
+      );
   }
 
-  sessionStorage.setItem(
-    SCRAMJET_REPAIR_KEY,
-    "1"
-  );
+  /*
+    If the database does not exist, create it ourselves
+    with the exact schema Scramjet's controller expects.
 
-  sessionStorage.setItem(
-    SCRAMJET_RETURN_KEY,
-    window.location.href
-  );
+    This prevents ScramjetServiceWorker from winning the
+    startup race and creating an empty version-1 database.
+  */
+  if (!existingDatabase) {
+    await createScramjetDatabase();
+
+    console.log(
+      "Scramjet IndexedDB initialized."
+    );
+
+    return;
+  }
+
+  /*
+    The database already exists.
+
+    Opening it here is safe because indexedDB.databases()
+    has already confirmed that it exists, so this call
+    cannot accidentally manufacture an empty database.
+  */
+  const schemaValid =
+    await new Promise(
+      (resolve, reject) => {
+        const request =
+          indexedDB.open(
+            SCRAMJET_DB_NAME
+          );
+
+        request.onsuccess =
+          () => {
+            const db =
+              request.result;
+
+            const stores =
+              [...db.objectStoreNames];
+
+            const valid =
+              SCRAMJET_STORES.every(
+                (storeName) =>
+                  stores.includes(
+                    storeName
+                  )
+              );
+
+            db.close();
+
+            resolve(valid);
+          };
+
+        request.onerror =
+          () => {
+            reject(
+              request.error
+            );
+          };
+      }
+    );
+
+  if (schemaValid) {
+    return;
+  }
 
   console.warn(
-    "Scramjet has a broken IndexedDB schema. Leaving Aether to repair it."
+    "Broken Scramjet IndexedDB detected. Rebuilding schema..."
   );
 
-  window.location.replace(
-    "/scramjet-repair.html"
-  );
+  await unregisterScramjetServiceWorker();
 
-  return true;
+  /*
+    Give any old worker instance a moment to release
+    its IndexedDB connection before deletion.
+  */
+  await wait(500);
+
+  await deleteScramjetDatabase();
+
+  await createScramjetDatabase();
+
+  console.log(
+    "Scramjet IndexedDB schema rebuilt."
+  );
 }
 
 function waitForServiceWorker(
@@ -187,6 +383,19 @@ export async function setupScramjet() {
     );
   }
 
+  /*
+    IMPORTANT:
+    Build/repair the IndexedDB schema BEFORE registering
+    Scramjet's service worker.
+
+    Scramjet v1's worker constructor opens $scramjet
+    without an upgrade callback. If it opens the DB first,
+    Chromium creates version 1 with zero stores.
+
+    Initializing it here removes that race.
+  */
+  await ensureScramjetDatabase();
+
   const registration =
     await navigator.serviceWorker.register(
       "/sw.js",
@@ -229,32 +438,7 @@ export async function setupScramjet() {
       },
     });
 
-  try {
-    await controller.init();
-  } catch (error) {
-    if (
-      isMissingObjectStoreError(
-        error
-      )
-    ) {
-      const repairing =
-        startScramjetRepair();
-
-      if (repairing) {
-        return null;
-      }
-    }
-
-    throw error;
-  }
-
-  sessionStorage.removeItem(
-    SCRAMJET_REPAIR_KEY
-  );
-
-  sessionStorage.removeItem(
-    SCRAMJET_RETURN_KEY
-  );
+  await controller.init();
 
   scramjet = controller;
 
