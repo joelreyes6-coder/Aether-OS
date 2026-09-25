@@ -149,6 +149,49 @@ const searchEngines = [
   { id: "yahoo", name: "Yahoo", icon: "Y!" },
 ];
 
+
+function createAetherGateChallenge() {
+  const pick = (items) => items[Math.floor(Math.random() * items.length)];
+  const type = pick(["arithmetic", "arithmetic", "sequence", "sequence", "symbols"]);
+
+  if (type === "arithmetic") {
+    const mode = pick(["add", "subtract", "multiply"]);
+    if (mode === "multiply") {
+      const a = Math.floor(Math.random() * 8) + 3;
+      const b = Math.floor(Math.random() * 8) + 3;
+      return { type, label: "CALCULATE", prompt: `${a} × ${b} = ?`, answer: String(a * b), hint: "ENTER NUMERIC RESPONSE" };
+    }
+    const a = Math.floor(Math.random() * 31) + 10;
+    const b = Math.floor(Math.random() * 19) + 3;
+    const subtract = mode === "subtract";
+    const high = subtract ? Math.max(a, b) : a;
+    const low = subtract ? Math.min(a, b) : b;
+    return { type, label: "CALCULATE", prompt: `${high} ${subtract ? "−" : "+"} ${low} = ?`, answer: String(subtract ? high - low : high + low), hint: "ENTER NUMERIC RESPONSE" };
+  }
+
+  if (type === "sequence") {
+    const mode = pick(["add", "multiply"]);
+    if (mode === "multiply") {
+      const start = Math.floor(Math.random() * 4) + 2;
+      const factor = pick([2, 3]);
+      const values = [start, start * factor, start * factor ** 2, start * factor ** 3];
+      return { type, label: "COMPLETE THE SEQUENCE", prompt: `${values.join("  →  ")}  →  ?`, answer: String(start * factor ** 4), hint: "DETECT THE PATTERN" };
+    }
+    const start = Math.floor(Math.random() * 10) + 2;
+    const step = Math.floor(Math.random() * 7) + 3;
+    const values = Array.from({ length: 4 }, (_, i) => start + step * i);
+    return { type, label: "COMPLETE THE SEQUENCE", prompt: `${values.join("  →  ")}  →  ?`, answer: String(start + step * 4), hint: "DETECT THE PATTERN" };
+  }
+
+  const symbolSets = [
+    { symbols: ["◇", "◆", "◇", "◆", "◇"], answer: "◆" },
+    { symbols: ["△", "○", "△", "○", "△"], answer: "○" },
+    { symbols: ["□", "□", "●", "□", "□"], answer: "●" },
+  ];
+  const chosen = pick(symbolSets);
+  return { type, label: "COMPLETE THE PATTERN", prompt: `${chosen.symbols.join("   ")}   ?`, answer: chosen.answer, hint: `TYPE ${chosen.answer} OR CLICK THE SYMBOL`, symbolAnswer: chosen.answer };
+}
+
 function App() {
   const [browserOpen, setBrowserOpen] = useState(false);
   const [browserMinimized, setBrowserMinimized] = useState(false);
@@ -161,6 +204,36 @@ function App() {
 
   const [messagesOpen, setMessagesOpen] = useState(false);
   const [messagesMinimized, setMessagesMinimized] = useState(false);
+
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesMinimized, setNotesMinimized] = useState(false);
+  const [notes, setNotes] = useState(() => {
+    try {
+      const saved = localStorage.getItem("my-os-notes");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch (error) {
+      console.error("Could not load notes:", error);
+    }
+
+    return [
+      {
+        id: `note-${Date.now()}`,
+        title: "Welcome to Notes",
+        body: "Your notes save automatically on this device.",
+        updatedAt: Date.now(),
+      },
+    ];
+  });
+  const [activeNoteId, setActiveNoteId] = useState(() => {
+    try {
+      return localStorage.getItem("my-os-active-note") || "";
+    } catch {
+      return "";
+    }
+  });
 
   const [messagesAccount, setMessagesAccount] = useState(null);
   const [messagesToken, setMessagesToken] = useState(() =>
@@ -283,6 +356,11 @@ function App() {
     }
   });
   const [enterAnimationActive, setEnterAnimationActive] = useState(true);
+  const [gateChallenge, setGateChallenge] = useState(() => createAetherGateChallenge());
+  const [gateAnswer, setGateAnswer] = useState("");
+  const [gateStatus, setGateStatus] = useState("awaiting");
+  const [gateAttempts, setGateAttempts] = useState(0);
+  const [gateSolved, setGateSolved] = useState(0);
 
   const [cursorStyle, setCursorStyle] = useState(() => {
     return localStorage.getItem("my-os-cursor") || "glow";
@@ -313,7 +391,10 @@ function App() {
   const frameRefs = useRef({});
   const cursorDotRef = useRef(null);
   const cursorGlowRef = useRef(null);
+  const gateCursorDotRef = useRef(null);
+  const gateCursorRingRef = useRef(null);
   const windowInteractionRef = useRef(null);
+  const proxyStartupStartedRef = useRef(false);
 
   const [windowInteractionActive, setWindowInteractionActive] = useState(false);
   const [resizeHoverEdge, setResizeHoverEdge] = useState("");
@@ -339,6 +420,13 @@ function App() {
     height: 680,
   });
 
+  const [notesRect, setNotesRect] = useState({
+    x: 185,
+    y: 95,
+    width: 900,
+    height: 650,
+  });
+
   const activeTab =
     tabs.find((tab) => tab.id === activeTabId) || tabs[0];
 
@@ -359,7 +447,7 @@ function App() {
   ========================= */
 
   useEffect(() => {
-    if (cursorStyle === "system") {
+    if (enterAnimationActive || cursorStyle === "system") {
       return;
     }
 
@@ -385,6 +473,15 @@ function App() {
 
       dot.classList.add("visible");
       glow.classList.add("visible");
+
+      const interactive = Boolean(
+        event.target.closest?.(
+          ".aether-enter-screen button, .aether-enter-screen input"
+        )
+      );
+
+      dot.classList.toggle("gate-interactive", interactive);
+      glow.classList.toggle("gate-interactive", interactive);
     }
 
     function handlePointerLeave() {
@@ -433,7 +530,62 @@ function App() {
 
       cancelAnimationFrame(animationFrame);
     };
-  }, [cursorStyle, cursorTracking]);
+  }, [cursorStyle, cursorTracking, enterAnimationActive]);
+
+  /* =========================
+     AETHER GATE CURSOR
+  ========================= */
+
+  useEffect(() => {
+    if (!enterAnimationActive) return;
+
+    const dot = gateCursorDotRef.current;
+    const ring = gateCursorRingRef.current;
+    if (!dot || !ring) return;
+
+    let pointerX = window.innerWidth / 2;
+    let pointerY = window.innerHeight / 2;
+    let ringX = pointerX;
+    let ringY = pointerY;
+    let frame = 0;
+
+    function handleGatePointerMove(event) {
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+
+      dot.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
+      dot.classList.add("visible");
+      ring.classList.add("visible");
+
+      const interactive = Boolean(
+        event.target.closest?.("button, input, [role='button']")
+      );
+      dot.classList.toggle("interactive", interactive);
+      ring.classList.toggle("interactive", interactive);
+    }
+
+    function handleGatePointerLeave() {
+      dot.classList.remove("visible");
+      ring.classList.remove("visible");
+    }
+
+    function animateGateRing() {
+      ringX += (pointerX - ringX) * 0.22;
+      ringY += (pointerY - ringY) * 0.22;
+      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      frame = requestAnimationFrame(animateGateRing);
+    }
+
+    window.addEventListener("pointermove", handleGatePointerMove);
+    document.addEventListener("mouseleave", handleGatePointerLeave);
+    animateGateRing();
+
+    return () => {
+      window.removeEventListener("pointermove", handleGatePointerMove);
+      document.removeEventListener("mouseleave", handleGatePointerLeave);
+      cancelAnimationFrame(frame);
+    };
+  }, [enterAnimationActive]);
 
   /* =========================
      LIVE BATTERY STATUS
@@ -646,6 +798,35 @@ function App() {
      AETHER ENTER ANIMATION
   ========================= */
 
+  function submitAetherGate(event) {
+    event?.preventDefault();
+    if (!enterAnimationActive || gateStatus === "granted" || gateStatus === "launching") return;
+
+    const submitted = gateAnswer.trim().toLowerCase();
+    const expected = gateChallenge.answer.trim().toLowerCase();
+
+    if (submitted === expected) {
+      setGateStatus("granted");
+      setGateSolved((current) => current + 1);
+      return;
+    }
+
+    setGateAttempts((current) => current + 1);
+    setGateStatus("denied");
+    window.setTimeout(() => setGateStatus("awaiting"), 650);
+  }
+
+  function nextAetherGateChallenge() {
+    setGateChallenge(createAetherGateChallenge());
+    setGateAnswer("");
+    setGateAttempts(0);
+    setGateStatus("awaiting");
+  }
+
+  function continueToAether() {
+    setGateStatus("launching");
+    window.setTimeout(() => setEnterAnimationActive(false), 1500);
+  }
 
   useEffect(() => {
     if (!enterAnimationActive) return;
@@ -653,16 +834,13 @@ function App() {
     function handleAetherEnterKey(event) {
       if (event.key === "Enter") {
         event.preventDefault();
-        setEnterAnimationActive(false);
+        submitAetherGate();
       }
     }
 
     window.addEventListener("keydown", handleAetherEnterKey);
-
-    return () => {
-      window.removeEventListener("keydown", handleAetherEnterKey);
-    };
-  }, [enterAnimationActive]);
+    return () => window.removeEventListener("keydown", handleAetherEnterKey);
+  }, [enterAnimationActive, gateAnswer, gateStatus, gateChallenge.answer]);
 
   /* =========================
      WALLPAPER CODE UNLOCKS
@@ -743,6 +921,26 @@ function App() {
       JSON.stringify(conversations)
     );
   }, [conversations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("my-os-notes", JSON.stringify(notes));
+    } catch (error) {
+      console.error("Could not save notes:", error);
+    }
+  }, [notes]);
+
+  useEffect(() => {
+    if (!notes.length) return;
+
+    const activeStillExists = notes.some((note) => note.id === activeNoteId);
+    if (!activeStillExists) {
+      setActiveNoteId(notes[0].id);
+      return;
+    }
+
+    localStorage.setItem("my-os-active-note", activeNoteId);
+  }, [notes, activeNoteId]);
 
   /* =========================
      MESSAGES V2 ACCOUNT SESSION
@@ -1205,29 +1403,26 @@ function App() {
   ========================= */
 
   useEffect(() => {
+    if (proxyStartupStartedRef.current) return;
+    proxyStartupStartedRef.current = true;
+
     async function startProxy() {
       try {
         await setupBareMux();
-
         setProxyStatus("Ready");
+        console.log("BareMux connected!");
 
-        console.log(
-          "BareMux connected!"
-        );
+        const controller = await setupScramjet();
 
-        await setupScramjet();
+        if (!controller) {
+          setScramjetStatus("Repairing...");
+          return;
+        }
 
         setScramjetStatus("Ready");
-
-        console.log(
-          "Scramjet connected!"
-        );
+        console.log("Scramjet connected!");
       } catch (error) {
-        console.error(
-          "Startup failed:",
-          error
-        );
-
+        console.error("Startup failed:", error);
         setScramjetStatus("Failed");
       }
     }
@@ -1859,6 +2054,75 @@ function App() {
   }
 
   /* =========================
+     NOTES
+  ========================= */
+
+  function openNotes() {
+    setNotesOpen(true);
+    setNotesMinimized(false);
+
+    if (!activeNoteId && notes.length) {
+      setActiveNoteId(notes[0].id);
+    }
+  }
+
+  function minimizeNotes() {
+    setNotesMinimized(true);
+  }
+
+  function closeNotes() {
+    setNotesOpen(false);
+    setNotesMinimized(false);
+  }
+
+  function createNote() {
+    const newNote = {
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: "Untitled note",
+      body: "",
+      updatedAt: Date.now(),
+    };
+
+    setNotes((current) => [newNote, ...current]);
+    setActiveNoteId(newNote.id);
+  }
+
+  function updateActiveNote(changes) {
+    setNotes((current) =>
+      current.map((note) =>
+        note.id === activeNoteId
+          ? { ...note, ...changes, updatedAt: Date.now() }
+          : note
+      )
+    );
+  }
+
+  function deleteActiveNote() {
+    if (!activeNoteId) return;
+
+    setNotes((current) => {
+      const remaining = current.filter((note) => note.id !== activeNoteId);
+
+      if (!remaining.length) {
+        const replacement = {
+          id: `note-${Date.now()}-blank`,
+          title: "Untitled note",
+          body: "",
+          updatedAt: Date.now(),
+        };
+        setActiveNoteId(replacement.id);
+        return [replacement];
+      }
+
+      setActiveNoteId(remaining[0].id);
+      return remaining;
+    });
+  }
+
+  const activeNote =
+    notes.find((note) => note.id === activeNoteId) || notes[0] || null;
+
+  /* =========================
      MESSAGES
   ========================= */
 
@@ -2047,6 +2311,7 @@ function App() {
     if (app === "browser") openBrowser();
     if (app === "neontv") openNeonTV();
     if (app === "messages") openMessages();
+    if (app === "notes") openNotes();
     if (app === "settings") openSettings();
   }
 
@@ -2103,6 +2368,8 @@ function App() {
   return (
     <div
       className={`desktop theme-${theme} background-${background} cursor-mode-${cursorStyle} ${
+        enterAnimationActive ? "gate-active" : ""
+      } ${
         activeLiveWallpaper
           ? "has-live-wallpaper"
           : ""
@@ -2113,22 +2380,81 @@ function App() {
       }`}
     >
       {enterAnimationActive && (
-        <div className="aether-enter-screen">
-          <div className="aether-enter-core">
-            <div className="aether-enter-ring aether-enter-ring-one"></div>
-            <div className="aether-enter-ring aether-enter-ring-two"></div>
-            <div className="aether-enter-mark">A</div>
+        <div className={`aether-enter-screen gate-${gateStatus}`}>
+          <div ref={gateCursorRingRef} className="aether-gate-cursor-ring" aria-hidden="true"></div>
+          <div ref={gateCursorDotRef} className="aether-gate-cursor-dot" aria-hidden="true"></div>
+          <div className="aether-gate-noise" aria-hidden="true"></div>
+          <div className="aether-gate-scanline" aria-hidden="true"></div>
+
+          <div className="aether-gate-shell">
+            <div className="aether-gate-topline">
+              <span>AETHER SECURITY LAYER</span>
+              <span className="aether-gate-node">NODE // 01</span>
+            </div>
+
+            <div className="aether-enter-core">
+              <div className="aether-enter-ring aether-enter-ring-one"></div>
+              <div className="aether-enter-ring aether-enter-ring-two"></div>
+              <div className="aether-enter-mark">A</div>
+            </div>
+
+            <div className="aether-enter-title">AETHER</div>
+            <div className="aether-enter-status">
+              {gateStatus === "launching" ? "ENTERING AETHER" : gateStatus === "granted" ? "AUTHORIZATION ACCEPTED" : gateStatus === "denied" ? "SEQUENCE INVALID" : "IDENTITY CHALLENGE REQUIRED"}
+            </div>
+
+            <form className="aether-gate-challenge" onSubmit={submitAetherGate}>
+              <div className="aether-gate-label">{gateChallenge.label}</div>
+              <div className="aether-gate-prompt">{gateChallenge.prompt}</div>
+
+              {gateChallenge.symbolAnswer && (
+                <div className="aether-gate-symbols" aria-label="Symbol choices">
+                  {["◇", "◆", "△", "○", "□", "●"].map((symbol) => (
+                    <button key={symbol} type="button" onClick={() => setGateAnswer(symbol)} className={gateAnswer === symbol ? "selected" : ""}>{symbol}</button>
+                  ))}
+                </div>
+              )}
+
+              {gateStatus !== "granted" && gateStatus !== "launching" ? (
+                <>
+                  <div className="aether-gate-input-row">
+                    <span className="aether-gate-chevron">›</span>
+                    <input
+                      autoFocus
+                      value={gateAnswer}
+                      onChange={(event) => setGateAnswer(event.target.value)}
+                      placeholder={gateChallenge.symbolAnswer ? "SELECT OR TYPE SYMBOL" : "ENTER RESPONSE"}
+                      autoComplete="off"
+                      spellCheck="false"
+                      aria-label="Aether gate answer"
+                    />
+                  </div>
+
+                  <div className="aether-gate-meta">
+                    <span>{gateChallenge.hint}</span>
+                    <span>ATTEMPTS // {String(gateAttempts).padStart(2, "0")}</span>
+                  </div>
+
+                  <button type="submit" className="aether-enter-button">ENTER</button>
+                </>
+              ) : gateStatus === "granted" ? (
+                <div className="aether-gate-success-actions">
+                  <div className="aether-gate-solved">SOLVED // {String(gateSolved).padStart(2, "0")}</div>
+                  <button type="button" className="aether-gate-next-button" onClick={nextAetherGateChallenge}>
+                    NEXT QUESTION
+                  </button>
+                  <button type="button" className="aether-gate-continue-button" onClick={continueToAether}>
+                    CONTINUE TO AETHER
+                  </button>
+                </div>
+              ) : (
+                <div className="aether-gate-launching">INITIALIZING AETHER...</div>
+              )}
+            </form>
+
+            <div className="aether-enter-loader"><span></span></div>
+            <div className="aether-gate-footer">SECURE BOOT // CHALLENGE PROTOCOL // AETHER</div>
           </div>
-          <div className="aether-enter-title">AETHER OS</div>
-          <div className="aether-enter-status">SYSTEM READY · PRESS ENTER</div>
-          <div className="aether-enter-loader"><span></span></div>
-          <button
-            type="button"
-            className="aether-enter-button"
-            onClick={() => setEnterAnimationActive(false)}
-          >
-            ENTER
-          </button>
         </div>
       )}
 
@@ -3190,6 +3516,122 @@ function App() {
       )}
 
       {/* =====================
+          NOTES
+      ====================== */}
+
+      {notesOpen && (
+        <div
+          className="window notes-window custom-sized-window"
+          style={{
+            width: `${notesRect.width}px`,
+            height: `${notesRect.height}px`,
+            left: `${notesRect.x}px`,
+            top: `${notesRect.y}px`,
+            transform: "none",
+            display: notesMinimized ? "none" : undefined,
+          }}
+        >
+          {renderResizeHandles(notesRect, setNotesRect, 560, 420)}
+
+          <div
+            className="window-top window-drag-handle"
+            onPointerDown={(event) => {
+              if (event.target.closest("button, input, textarea")) return;
+
+              beginWindowInteraction(
+                event,
+                "move",
+                "",
+                notesRect,
+                setNotesRect,
+                560,
+                420
+              );
+            }}
+          >
+            <span className="window-title">
+              <span className="mini-app-icon notes-icon" aria-hidden="true">
+                <span></span>
+              </span>
+              Notes
+            </span>
+
+            <div>
+              <button onClick={minimizeNotes}>—</button>
+              <button onClick={closeNotes}>✕</button>
+            </div>
+          </div>
+
+          <div className="notes-shell">
+            <aside className="notes-sidebar">
+              <div className="notes-sidebar-top">
+                <div>
+                  <span className="notes-kicker">AETHER NOTES</span>
+                  <strong>{notes.length} {notes.length === 1 ? "NOTE" : "NOTES"}</strong>
+                </div>
+
+                <button className="notes-new-button" onClick={createNote} title="New note">
+                  +
+                </button>
+              </div>
+
+              <div className="notes-list">
+                {notes.map((note) => (
+                  <button
+                    key={note.id}
+                    className={`notes-list-item ${note.id === activeNote?.id ? "active" : ""}`}
+                    onClick={() => setActiveNoteId(note.id)}
+                  >
+                    <strong>{note.title.trim() || "Untitled note"}</strong>
+                    <span>{note.body.trim() || "Empty note"}</span>
+                    <small>
+                      {new Date(note.updatedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            <section className="notes-editor">
+              {activeNote ? (
+                <>
+                  <div className="notes-editor-toolbar">
+                    <span>AUTOSAVED LOCALLY</span>
+                    <button className="notes-delete-button" onClick={deleteActiveNote}>
+                      DELETE
+                    </button>
+                  </div>
+
+                  <input
+                    className="notes-title-input"
+                    value={activeNote.title}
+                    onChange={(event) => updateActiveNote({ title: event.target.value })}
+                    placeholder="Note title"
+                    spellCheck="true"
+                  />
+
+                  <textarea
+                    className="notes-body-input"
+                    value={activeNote.body}
+                    onChange={(event) => updateActiveNote({ body: event.target.value })}
+                    placeholder="Start typing..."
+                    spellCheck="true"
+                  />
+
+                  <div className="notes-statusbar">
+                    <span>{activeNote.body.length} CHARACTERS</span>
+                    <span>LOCAL STORAGE</span>
+                  </div>
+                </>
+              ) : (
+                <div className="notes-empty">NO NOTE SELECTED</div>
+              )}
+            </section>
+          </div>
+        </div>
+      )}
+
+      {/* =====================
           SETTINGS
       ====================== */}
 
@@ -3790,7 +4232,7 @@ function App() {
                 { id: "messages", name: "Messages", icon: "◆", ready: true },
                 { id: "settings", name: "Settings", icon: "✦", ready: true },
                 { id: "files", name: "Files", icon: "▰", ready: false },
-                { id: "notes", name: "Notes", icon: "▤", ready: false },
+                { id: "notes", name: "Notes", icon: "▤", ready: true },
                 { id: "terminal", name: "Terminal", icon: ">_", ready: false },
                 { id: "calculator", name: "Calculator", icon: "±", ready: false },
               ]
@@ -3820,6 +4262,10 @@ function App() {
                       </span>
                     ) : app.id === "settings" ? (
                       <span className="start-app-icon custom-app-icon settings-icon" aria-hidden="true">
+                        <span></span>
+                      </span>
+                    ) : app.id === "notes" ? (
+                      <span className="start-app-icon custom-app-icon notes-icon" aria-hidden="true">
                         <span></span>
                       </span>
                     ) : (
@@ -3943,6 +4389,24 @@ function App() {
             <span className="taskbar-unread-badge">
               {totalUnread > 9 ? "9+" : totalUnread}
             </span>
+          )}
+        </button>
+
+        <button
+          title="Notes"
+          onClick={openNotes}
+          className="notes-taskbar-button"
+        >
+          <span className="taskbar-icon custom-app-icon notes-icon" aria-hidden="true">
+            <span></span>
+          </span>
+
+          <span className="taskbar-label">
+            Notes
+          </span>
+
+          {notesOpen && (
+            <span className="running-dot"></span>
           )}
         </button>
 
