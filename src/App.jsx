@@ -192,7 +192,170 @@ function createAetherGateChallenge() {
   return { type, label: "COMPLETE THE PATTERN", prompt: `${chosen.symbols.join("   ")}   ?`, answer: chosen.answer, hint: `TYPE ${chosen.answer} OR CLICK THE SYMBOL`, symbolAnswer: chosen.answer };
 }
 
-function App() {
+
+function AetherStudyShell({ appOpen }) {
+  useEffect(() => {
+    document.title = "Study Workspace";
+
+    document.documentElement.classList.toggle("aether-app-open", appOpen);
+    document.body.classList.toggle("aether-app-open", appOpen);
+
+    return () => {
+      document.documentElement.classList.remove("aether-app-open");
+      document.body.classList.remove("aether-app-open");
+    };
+  }, [appOpen]);
+
+  const today = new Date();
+  const dayLabel = today.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  return (
+    <div className={`aether-study-shell ${appOpen ? "open" : ""}`}>
+      <main className="study-cover" aria-hidden={appOpen ? "true" : "false"}>
+        <div className="study-cover-orb study-cover-orb-one" aria-hidden="true"></div>
+        <div className="study-cover-orb study-cover-orb-two" aria-hidden="true"></div>
+
+        <header className="study-cover-header">
+          <div className="study-cover-brand">
+            <div className="study-cover-logo" aria-hidden="true">S</div>
+            <div>
+              <strong>Study Workspace</strong>
+              <span>Student dashboard</span>
+            </div>
+          </div>
+
+          <div className="study-cover-date">{dayLabel}</div>
+        </header>
+
+        <section className="study-cover-hero">
+          <div>
+            <span className="study-cover-kicker">STUDENT WORKSPACE</span>
+            <h1>Ready for a focused study session?</h1>
+            <p>
+              Keep assignments organized, review today&apos;s goals, and work
+              through one small task at a time.
+            </p>
+          </div>
+
+          <div className="study-cover-progress">
+            <div className="study-cover-progress-ring">
+              <span>72%</span>
+            </div>
+            <div>
+              <strong>Weekly progress</strong>
+              <span>9 of 12 goals complete</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="study-cover-grid">
+          <article className="study-card study-card-wide">
+            <div className="study-card-heading">
+              <div>
+                <span className="study-card-eyebrow">TODAY</span>
+                <h2>Assignments</h2>
+              </div>
+              <span className="study-card-count">3 tasks</span>
+            </div>
+
+            <div className="study-task-list">
+              <div className="study-task">
+                <span className="study-task-check">✓</span>
+                <div>
+                  <strong>Math practice</strong>
+                  <span>Functions &amp; graph review</span>
+                </div>
+                <em>Complete</em>
+              </div>
+
+              <div className="study-task">
+                <span className="study-task-check pending">2</span>
+                <div>
+                  <strong>Reading notes</strong>
+                  <span>Summarize today&apos;s chapter</span>
+                </div>
+                <em>20 min</em>
+              </div>
+
+              <div className="study-task">
+                <span className="study-task-check pending">3</span>
+                <div>
+                  <strong>Science review</strong>
+                  <span>Vocabulary &amp; key concepts</span>
+                </div>
+                <em>15 min</em>
+              </div>
+            </div>
+          </article>
+
+          <article className="study-card">
+            <span className="study-card-eyebrow">FOCUS TIMER</span>
+            <div className="study-timer">25:00</div>
+            <p>One focused block, then take a short break.</p>
+            <button type="button" className="study-soft-button">
+              START SESSION
+            </button>
+          </article>
+
+          <article className="study-card">
+            <span className="study-card-eyebrow">MATH WARM-UP</span>
+            <div className="study-equation">8 × 7 = ?</div>
+            <p>Quick mental-math practice before you begin.</p>
+            <div className="study-answer-row" aria-label="Practice answers">
+              <span>48</span>
+              <span>54</span>
+              <span>56</span>
+              <span>64</span>
+            </div>
+          </article>
+
+          <article className="study-card study-card-quote">
+            <span className="study-card-eyebrow">DAILY REMINDER</span>
+            <blockquote>
+              Small progress still counts. Finish one thing, then move to the
+              next.
+            </blockquote>
+            <span className="study-muted">Workspace tip</span>
+          </article>
+
+          <article className="study-card">
+            <span className="study-card-eyebrow">STUDY STREAK</span>
+            <div className="study-streak-row">
+              {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+                <span
+                  key={`${day}-${index}`}
+                  className={index < 4 ? "active" : ""}
+                >
+                  {day}
+                </span>
+              ))}
+            </div>
+            <p>4 focused days this week.</p>
+          </article>
+        </section>
+
+        <footer className="study-cover-footer">
+          <span>Study Workspace · Personal learning dashboard</span>
+          <span>Refresh to sync your workspace</span>
+        </footer>
+      </main>
+
+      <iframe
+        id="aether-app-frame"
+        title="Study Workspace"
+        allow="fullscreen; autoplay; clipboard-read; clipboard-write; gamepad"
+        allowFullScreen
+        src={appOpen ? `${window.location.pathname}?aether-frame=1` : undefined}
+      />
+    </div>
+  );
+}
+
+function AetherApp() {
   const [browserOpen, setBrowserOpen] = useState(false);
   const [browserMinimized, setBrowserMinimized] = useState(false);
   const [browserMaximized, setBrowserMaximized] = useState(false);
@@ -4429,6 +4592,56 @@ function App() {
       </div>
     </div>
   );
+}
+
+
+function App() {
+  const frameMode =
+    new URLSearchParams(window.location.search).get("aether-frame") === "1";
+
+  const [appOpen] = useState(() => {
+    if (frameMode) return true;
+
+    const seenKey = "aether_education_seen";
+    let seen = false;
+
+    try {
+      seen = window.localStorage.getItem(seenKey) === "1";
+    } catch {
+      // Storage can be unavailable in restrictive browser modes.
+    }
+
+    try {
+      seen =
+        seen ||
+        /(?:^|;\s*)aether_education_seen=1(?:;|$)/.test(document.cookie);
+    } catch {
+      // Cookies can also be unavailable.
+    }
+
+    if (seen) return true;
+
+    try {
+      window.localStorage.setItem(seenKey, "1");
+    } catch {
+      // First visit still remains on the study shell.
+    }
+
+    try {
+      document.cookie =
+        `${seenKey}=1; Path=/; Max-Age=31536000; SameSite=Lax`;
+    } catch {
+      // First visit still remains on the study shell.
+    }
+
+    return false;
+  });
+
+  if (frameMode) {
+    return <AetherApp />;
+  }
+
+  return <AetherStudyShell appOpen={appOpen} />;
 }
 
 export default App;
