@@ -194,6 +194,104 @@ function createAetherGateChallenge() {
 
 
 function AetherStudyShell({ appOpen }) {
+  const defaultTasks = [
+    {
+      id: "math-practice",
+      title: "Math practice",
+      detail: "Functions & graph review",
+      done: false,
+    },
+    {
+      id: "reading-notes",
+      title: "Reading notes",
+      detail: "Summarize today's chapter",
+      done: false,
+    },
+    {
+      id: "science-review",
+      title: "Science review",
+      detail: "Vocabulary & key concepts",
+      done: false,
+    },
+  ];
+
+  const [studyTasks, setStudyTasks] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("aether-study-tasks") || "null");
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch {
+      // Use defaults when saved data is unavailable.
+    }
+    return defaultTasks;
+  });
+
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    const saved = Number(localStorage.getItem("aether-study-timer-seconds"));
+    return Number.isFinite(saved) && saved >= 0 && saved <= 25 * 60
+      ? saved
+      : 25 * 60;
+  });
+  const [timerRunning, setTimerRunning] = useState(false);
+
+  const makeMathQuestion = () => {
+    const modes = ["add", "subtract", "multiply"];
+    const mode = modes[Math.floor(Math.random() * modes.length)];
+
+    if (mode === "multiply") {
+      const a = Math.floor(Math.random() * 9) + 3;
+      const b = Math.floor(Math.random() * 9) + 3;
+      const answer = a * b;
+      const options = new Set([answer]);
+
+      while (options.size < 4) {
+        const offset = Math.floor(Math.random() * 15) - 7;
+        if (offset !== 0 && answer + offset > 0) options.add(answer + offset);
+      }
+
+      return {
+        prompt: `${a} × ${b} = ?`,
+        answer,
+        options: [...options].sort(() => Math.random() - 0.5),
+      };
+    }
+
+    const a = Math.floor(Math.random() * 40) + 12;
+    const b = Math.floor(Math.random() * 20) + 3;
+    const subtract = mode === "subtract";
+    const high = subtract ? Math.max(a, b) : a;
+    const low = subtract ? Math.min(a, b) : b;
+    const answer = subtract ? high - low : high + low;
+    const options = new Set([answer]);
+
+    while (options.size < 4) {
+      const offset = Math.floor(Math.random() * 13) - 6;
+      if (offset !== 0 && answer + offset >= 0) options.add(answer + offset);
+    }
+
+    return {
+      prompt: `${high} ${subtract ? "−" : "+"} ${low} = ?`,
+      answer,
+      options: [...options].sort(() => Math.random() - 0.5),
+    };
+  };
+
+  const [mathQuestion, setMathQuestion] = useState(() => makeMathQuestion());
+  const [mathStatus, setMathStatus] = useState("idle");
+  const [mathSolved, setMathSolved] = useState(() => {
+    const saved = Number(localStorage.getItem("aether-study-math-solved"));
+    return Number.isFinite(saved) && saved >= 0 ? saved : 0;
+  });
+
+  const [studyDates, setStudyDates] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("aether-study-dates") || "[]");
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  });
+
   useEffect(() => {
     document.title = "Study Workspace";
 
@@ -206,12 +304,134 @@ function AetherStudyShell({ appOpen }) {
     };
   }, [appOpen]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem("aether-study-tasks", JSON.stringify(studyTasks));
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [studyTasks]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("aether-study-timer-seconds", String(timerSeconds));
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [timerSeconds]);
+
+  useEffect(() => {
+    if (!timerRunning || appOpen) return;
+
+    const timer = window.setInterval(() => {
+      setTimerSeconds((current) => {
+        if (current <= 1) {
+          setTimerRunning(false);
+
+          const todayKey = new Date().toISOString().slice(0, 10);
+          setStudyDates((dates) => {
+            if (dates.includes(todayKey)) return dates;
+            const next = [...dates, todayKey].slice(-30);
+            try {
+              localStorage.setItem("aether-study-dates", JSON.stringify(next));
+            } catch {
+              // Ignore storage failures.
+            }
+            return next;
+          });
+
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [timerRunning, appOpen]);
+
   const today = new Date();
   const dayLabel = today.toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
+
+  const completedTasks = studyTasks.filter((task) => task.done).length;
+  const taskTotal = Math.max(studyTasks.length, 1);
+  const progressPercent = Math.round((completedTasks / taskTotal) * 100);
+
+  const minutes = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+  const seconds = String(timerSeconds % 60).padStart(2, "0");
+
+  function toggleTask(taskId) {
+    setStudyTasks((tasks) =>
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, done: !task.done } : task
+      )
+    );
+  }
+
+  function addStudyTask(event) {
+    event.preventDefault();
+    const title = newTaskTitle.trim();
+    if (!title) return;
+
+    setStudyTasks((tasks) => [
+      ...tasks,
+      {
+        id: `study-task-${Date.now()}`,
+        title,
+        detail: "Personal study task",
+        done: false,
+      },
+    ]);
+    setNewTaskTitle("");
+  }
+
+  function deleteTask(taskId) {
+    setStudyTasks((tasks) => tasks.filter((task) => task.id !== taskId));
+  }
+
+  function answerMath(option) {
+    if (mathStatus === "correct") return;
+
+    if (option === mathQuestion.answer) {
+      setMathStatus("correct");
+      setMathSolved((count) => {
+        const next = count + 1;
+        try {
+          localStorage.setItem("aether-study-math-solved", String(next));
+        } catch {
+          // Ignore storage failures.
+        }
+        return next;
+      });
+      return;
+    }
+
+    setMathStatus("wrong");
+    window.setTimeout(() => setMathStatus("idle"), 650);
+  }
+
+  function nextMathQuestion() {
+    setMathQuestion(makeMathQuestion());
+    setMathStatus("idle");
+  }
+
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    const currentDay = (date.getDay() + 6) % 7;
+    date.setDate(date.getDate() - currentDay + index);
+    return {
+      label: ["M", "T", "W", "T", "F", "S", "S"][index],
+      key: date.toISOString().slice(0, 10),
+    };
+  });
+
+  const focusedDaysThisWeek = weekDays.filter((day) =>
+    studyDates.includes(day.key)
+  ).length;
 
   return (
     <div className={`aether-study-shell ${appOpen ? "open" : ""}`}>
@@ -242,12 +462,19 @@ function AetherStudyShell({ appOpen }) {
           </div>
 
           <div className="study-cover-progress">
-            <div className="study-cover-progress-ring">
-              <span>72%</span>
+            <div
+              className="study-cover-progress-ring"
+              style={{
+                background: `radial-gradient(circle, #ffffff 58%, transparent 60%), conic-gradient(#687fe8 0 ${progressPercent}%, #e3e8f1 ${progressPercent}% 100%)`,
+              }}
+            >
+              <span>{progressPercent}%</span>
             </div>
             <div>
-              <strong>Weekly progress</strong>
-              <span>9 of 12 goals complete</span>
+              <strong>Today&apos;s progress</strong>
+              <span>
+                {completedTasks} of {studyTasks.length} tasks complete
+              </span>
             </div>
           </div>
         </section>
@@ -259,58 +486,134 @@ function AetherStudyShell({ appOpen }) {
                 <span className="study-card-eyebrow">TODAY</span>
                 <h2>Assignments</h2>
               </div>
-              <span className="study-card-count">3 tasks</span>
+              <span className="study-card-count">
+                {studyTasks.length} {studyTasks.length === 1 ? "task" : "tasks"}
+              </span>
             </div>
 
             <div className="study-task-list">
-              <div className="study-task">
-                <span className="study-task-check">✓</span>
-                <div>
-                  <strong>Math practice</strong>
-                  <span>Functions &amp; graph review</span>
-                </div>
-                <em>Complete</em>
-              </div>
+              {studyTasks.map((task, index) => (
+                <div
+                  key={task.id}
+                  className={`study-task ${task.done ? "done" : ""}`}
+                >
+                  <button
+                    type="button"
+                    className={`study-task-check ${task.done ? "" : "pending"}`}
+                    onClick={() => toggleTask(task.id)}
+                    aria-label={`${task.done ? "Mark incomplete" : "Mark complete"}: ${task.title}`}
+                  >
+                    {task.done ? "✓" : index + 1}
+                  </button>
 
-              <div className="study-task">
-                <span className="study-task-check pending">2</span>
-                <div>
-                  <strong>Reading notes</strong>
-                  <span>Summarize today&apos;s chapter</span>
-                </div>
-                <em>20 min</em>
-              </div>
+                  <button
+                    type="button"
+                    className="study-task-main"
+                    onClick={() => toggleTask(task.id)}
+                  >
+                    <strong>{task.title}</strong>
+                    <span>{task.detail}</span>
+                  </button>
 
-              <div className="study-task">
-                <span className="study-task-check pending">3</span>
-                <div>
-                  <strong>Science review</strong>
-                  <span>Vocabulary &amp; key concepts</span>
+                  <button
+                    type="button"
+                    className="study-task-delete"
+                    onClick={() => deleteTask(task.id)}
+                    aria-label={`Delete ${task.title}`}
+                  >
+                    ×
+                  </button>
                 </div>
-                <em>15 min</em>
-              </div>
+              ))}
             </div>
+
+            <form className="study-add-task" onSubmit={addStudyTask}>
+              <input
+                value={newTaskTitle}
+                onChange={(event) => setNewTaskTitle(event.target.value)}
+                placeholder="Add an assignment..."
+                maxLength={80}
+              />
+              <button type="submit">ADD</button>
+            </form>
           </article>
 
           <article className="study-card">
             <span className="study-card-eyebrow">FOCUS TIMER</span>
-            <div className="study-timer">25:00</div>
-            <p>One focused block, then take a short break.</p>
-            <button type="button" className="study-soft-button">
-              START SESSION
-            </button>
+            <div className="study-timer">
+              {minutes}:{seconds}
+            </div>
+            <p>
+              {timerSeconds === 0
+                ? "Focus block complete. Nice work."
+                : timerRunning
+                  ? "Focus mode is running."
+                  : "One focused block, then take a short break."}
+            </p>
+
+            <div className="study-timer-actions">
+              <button
+                type="button"
+                className="study-soft-button"
+                onClick={() => {
+                  if (timerSeconds === 0) setTimerSeconds(25 * 60);
+                  setTimerRunning((running) => !running);
+                }}
+              >
+                {timerRunning ? "PAUSE" : timerSeconds === 0 ? "START AGAIN" : "START SESSION"}
+              </button>
+
+              <button
+                type="button"
+                className="study-soft-button secondary"
+                onClick={() => {
+                  setTimerRunning(false);
+                  setTimerSeconds(25 * 60);
+                }}
+              >
+                RESET
+              </button>
+            </div>
           </article>
 
-          <article className="study-card">
+          <article className={`study-card study-math-card ${mathStatus}`}>
             <span className="study-card-eyebrow">MATH WARM-UP</span>
-            <div className="study-equation">8 × 7 = ?</div>
-            <p>Quick mental-math practice before you begin.</p>
+            <div className="study-equation">{mathQuestion.prompt}</div>
+
+            <p className="study-math-feedback">
+              {mathStatus === "correct"
+                ? "Correct ✓"
+                : mathStatus === "wrong"
+                  ? "Not quite — try again."
+                  : `Solved this session: ${mathSolved}`}
+            </p>
+
             <div className="study-answer-row" aria-label="Practice answers">
-              <span>48</span>
-              <span>54</span>
-              <span>56</span>
-              <span>64</span>
+              {mathQuestion.options.map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  onClick={() => answerMath(option)}
+                  className={
+                    mathStatus === "correct" && option === mathQuestion.answer
+                      ? "correct"
+                      : ""
+                  }
+                >
+                  {option}
+                </button>
+              ))}
             </div>
+
+            {mathStatus === "correct" && (
+              <button
+                type="button"
+                className="study-next-question"
+                onClick={nextMathQuestion}
+              >
+                NEXT QUESTION
+              </button>
+            )}
           </article>
 
           <article className="study-card study-card-quote">
@@ -319,28 +622,35 @@ function AetherStudyShell({ appOpen }) {
               Small progress still counts. Finish one thing, then move to the
               next.
             </blockquote>
-            <span className="study-muted">Workspace tip</span>
+            <span className="study-muted">
+              Your Study Workspace saves automatically on this device.
+            </span>
           </article>
 
           <article className="study-card">
             <span className="study-card-eyebrow">STUDY STREAK</span>
             <div className="study-streak-row">
-              {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+              {weekDays.map((day, index) => (
                 <span
-                  key={`${day}-${index}`}
-                  className={index < 4 ? "active" : ""}
+                  key={`${day.key}-${index}`}
+                  className={studyDates.includes(day.key) ? "active" : ""}
+                  title={day.key}
                 >
-                  {day}
+                  {day.label}
                 </span>
               ))}
             </div>
-            <p>4 focused days this week.</p>
+            <p>
+              {focusedDaysThisWeek === 0
+                ? "Finish a focus timer to start your streak."
+                : `${focusedDaysThisWeek} focused ${focusedDaysThisWeek === 1 ? "day" : "days"} this week.`}
+            </p>
           </article>
         </section>
 
         <footer className="study-cover-footer">
           <span>Study Workspace · Personal learning dashboard</span>
-          <span>Refresh to sync your workspace</span>
+          <span>Progress saves automatically</span>
         </footer>
       </main>
 
@@ -354,6 +664,7 @@ function AetherStudyShell({ appOpen }) {
     </div>
   );
 }
+
 
 function AetherApp() {
   const [browserOpen, setBrowserOpen] = useState(false);
