@@ -1,15 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [react()],
 
-  server: {
-    port: 5173,
-    proxy: {
-      "/wisp/": {
-        target: "ws://127.0.0.1:5001",
-        ws: true,
+  build: {
+    rollupOptions: {
+      input: {
+        study: resolve(process.cwd(), "index.html"),
+        aether: resolve(process.cwd(), "aether.html"),
       },
     },
   },

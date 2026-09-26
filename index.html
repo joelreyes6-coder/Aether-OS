@@ -2,15 +2,208 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>my-os</title>
+    <meta
+      name="description"
+      content="A simple personal study workspace for assignments, focus sessions, and practice."
+    />
+    <title>Study Workspace</title>
+    <link rel="stylesheet" href="/src/study-shell.css" />
+
+    <script>
+      (function () {
+        "use strict";
+
+        var seenKey = "aether_education_seen";
+
+        function openAether() {
+          document.documentElement.classList.add("aether-app-open");
+
+          function mount() {
+            var frame = document.getElementById("aether-app-frame");
+            if (!frame) return;
+
+            if (!frame.getAttribute("src")) {
+              frame.setAttribute("src", "/aether.html?aether-frame=1");
+            }
+
+            document.documentElement.classList.add("aether-app-open");
+            document.body.classList.add("aether-app-open");
+          }
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", mount, { once: true });
+          } else {
+            mount();
+          }
+        }
+
+        var seen = false;
+
+        try {
+          seen = window.localStorage.getItem(seenKey) === "1";
+        } catch (error) {}
+
+        try {
+          seen =
+            seen ||
+            /(?:^|;\s*)aether_education_seen=1(?:;|$)/.test(document.cookie);
+        } catch (error) {}
+
+        if (seen) {
+          openAether();
+          return;
+        }
+
+        try {
+          window.localStorage.setItem(seenKey, "1");
+        } catch (error) {}
+
+        try {
+          document.cookie =
+            seenKey + "=1; Path=/; Max-Age=31536000; SameSite=Lax";
+        } catch (error) {}
+
+        // First visit stays on Study Workspace.
+        // A later page load opens Aether.
+      })();
+    </script>
   </head>
 
   <body>
-    <div id="root"></div>
+    <main id="study-main" class="study-cover">
+      <div class="study-orb study-orb-one" aria-hidden="true"></div>
+      <div class="study-orb study-orb-two" aria-hidden="true"></div>
 
-    <script type="module" src="/scramjet.bundle.js"></script>
-    <script type="module" src="/src/main.jsx"></script>
+      <header class="study-header">
+        <div class="study-brand">
+          <div class="study-logo" aria-hidden="true">S</div>
+          <div>
+            <strong>Study Workspace</strong>
+            <span>Student dashboard</span>
+          </div>
+        </div>
+
+        <div id="study-date" class="study-date"></div>
+      </header>
+
+      <section class="study-hero">
+        <div>
+          <span class="study-kicker">STUDENT WORKSPACE</span>
+          <h1>Ready for a focused study session?</h1>
+          <p>
+            Keep assignments organized, review today's goals, and work through
+            one small task at a time.
+          </p>
+        </div>
+
+        <div class="study-progress">
+          <div id="progress-ring" class="study-progress-ring">
+            <span id="progress-percent">0%</span>
+          </div>
+          <div>
+            <strong>Today's progress</strong>
+            <span id="progress-label">0 of 0 tasks complete</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="study-grid">
+        <article class="study-card study-card-wide">
+          <div class="study-card-heading">
+            <div>
+              <span class="study-card-eyebrow">TODAY</span>
+              <h2>Assignments</h2>
+            </div>
+            <span id="task-count" class="study-card-count">0 tasks</span>
+          </div>
+
+          <div id="study-task-list" class="study-task-list"></div>
+
+          <form id="study-add-task" class="study-add-task">
+            <input
+              id="study-task-input"
+              maxlength="80"
+              autocomplete="off"
+              placeholder="Add an assignment..."
+            />
+            <button type="submit">ADD</button>
+          </form>
+        </article>
+
+        <article class="study-card">
+          <span class="study-card-eyebrow">FOCUS TIMER</span>
+          <div id="study-timer" class="study-timer">25:00</div>
+          <p id="timer-message">
+            One focused block, then take a short break.
+          </p>
+
+          <div class="study-timer-actions">
+            <button id="timer-toggle" type="button" class="study-soft-button">
+              START SESSION
+            </button>
+            <button
+              id="timer-reset"
+              type="button"
+              class="study-soft-button secondary"
+            >
+              RESET
+            </button>
+          </div>
+        </article>
+
+        <article id="math-card" class="study-card study-math-card">
+          <span class="study-card-eyebrow">MATH WARM-UP</span>
+          <div id="math-equation" class="study-equation"></div>
+          <p id="math-feedback" class="study-math-feedback"></p>
+          <div
+            id="math-answers"
+            class="study-answer-row"
+            aria-label="Practice answers"
+          ></div>
+          <button
+            id="math-next"
+            type="button"
+            class="study-next-question"
+            hidden
+          >
+            NEXT QUESTION
+          </button>
+        </article>
+
+        <article class="study-card study-card-quote">
+          <span class="study-card-eyebrow">DAILY REMINDER</span>
+          <blockquote>
+            Small progress still counts. Finish one thing, then move to the
+            next.
+          </blockquote>
+          <span class="study-muted">
+            Your Study Workspace saves automatically on this device.
+          </span>
+        </article>
+
+        <article class="study-card">
+          <span class="study-card-eyebrow">STUDY STREAK</span>
+          <div id="study-streak" class="study-streak-row"></div>
+          <p id="streak-message">
+            Finish a focus timer to start your streak.
+          </p>
+        </article>
+      </section>
+
+      <footer class="study-footer">
+        <span>Study Workspace · Personal learning dashboard</span>
+        <span>Progress saves automatically</span>
+      </footer>
+    </main>
+
+    <iframe
+      id="aether-app-frame"
+      title="Study Workspace"
+      allow="fullscreen; autoplay; clipboard-read; clipboard-write; gamepad"
+      allowfullscreen
+    ></iframe>
+
+    <script type="module" src="/src/study-shell.js"></script>
   </body>
 </html>
