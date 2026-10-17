@@ -8,13 +8,13 @@
       content="A simple personal study workspace for assignments, focus sessions, and practice."
     />
     <title>Study Workspace</title>
+    <link id="aether-shell-favicon" rel="icon" type="image/svg+xml" href="/study-mark.svg" />
     <style>
       #aether-app-frame { display: none; }
       html.aether-app-open, html.aether-app-open body { margin: 0; overflow: hidden; background: #02040b; }
       html.aether-app-open body > :not(#aether-app-frame) { display: none !important; }
       html.aether-app-open #aether-app-frame { display: block !important; position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; }
     </style>
-    <link rel="stylesheet" href="/src/study-shell.css" />
 
     <script>
       (function () {
@@ -24,7 +24,6 @@
 
         function openAether() {
           document.documentElement.classList.add("aether-app-open");
-          document.title = "Aether";
 
           function mount() {
             var frame = document.getElementById("aether-app-frame");
@@ -75,6 +74,47 @@
         // A later page load opens Aether.
       })();
     </script>
+    <script id="aether-shell-branding">
+      (function () {
+        "use strict";
+        var appLoaded = false;
+        var themeKey = "my-os-theme";
+        var colors = {
+          nebula: "#00d9ff", crimson: "#ff3158", matrix: "#00ff66",
+          arctic: "#007fc2", synthwave: "#ff36d8", void: "#d6d6d6",
+          ocean: "#22e6ff", solar: "#ffbd38", sakura: "#ff5ba7",
+          emerald: "#28f5b2", ultraviolet: "#b45cff", monochrome: "#f1f3f5"
+        };
+
+        function syncBranding() {
+          if (!appLoaded) return;
+          document.title = "Aether";
+          var theme = "nebula";
+          try { theme = String(localStorage.getItem(themeKey) || theme).toLowerCase(); } catch (error) {}
+          var color = Object.prototype.hasOwnProperty.call(colors, theme) ? colors[theme] : colors.nebula;
+          var icon = document.getElementById("aether-shell-favicon");
+          var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#080e1c"/><path d="M8 25 16 7l8 18M11 19h10" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          if (icon) icon.href = "data:image/svg+xml," + encodeURIComponent(svg);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+          var frame = document.getElementById("aether-app-frame");
+          frame.addEventListener("load", function () {
+            if (!frame.getAttribute("src")) return;
+            appLoaded = true;
+            syncBranding();
+          });
+        }, { once: true });
+        window.addEventListener("storage", function (event) {
+          if (event.key === themeKey) syncBranding();
+        });
+        window.addEventListener("focus", syncBranding);
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) syncBranding();
+        });
+      })();
+    </script>
+    <link rel="stylesheet" href="/src/study-shell.css" />
   </head>
 
   <body>
@@ -225,7 +265,11 @@
         document.getElementById("aether-reload-close").addEventListener("click", function () {
           notice.close();
         });
-        notice.showModal();
+        function scheduleNotice() {
+          window.setTimeout(function () { notice.showModal(); }, 250);
+        }
+        if (document.readyState === "complete") scheduleNotice();
+        else window.addEventListener("load", scheduleNotice, { once: true });
       })();
     </script>
     <script type="module" src="/src/study-shell.js"></script>
