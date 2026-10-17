@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import {
   setupBareMux,
-  setupScramjet,
-  getScramjet,
-} from "./scramjet.js";
+  setupUltraviolet,
+  getUltraviolet,
+} from "./ultraviolet.js";
 
 const API_BASE_URL =
   window.location.hostname === "localhost" ||
@@ -387,7 +387,7 @@ function App() {
   const [activeTabId, setActiveTabId] = useState(1);
 
   const [proxyStatus, setProxyStatus] = useState("Starting...");
-  const [scramjetStatus, setScramjetStatus] = useState("Starting...");
+  const [ultravioletStatus, setUltravioletStatus] = useState("Starting...");
 
   const frameRefs = useRef({});
   const cursorDotRef = useRef(null);
@@ -1413,18 +1413,18 @@ function App() {
         setProxyStatus("Ready");
         console.log("BareMux connected!");
 
-        const controller = await setupScramjet();
+        const controller = await setupUltraviolet();
 
         if (!controller) {
-          setScramjetStatus("Repairing...");
+          setUltravioletStatus("Repairing...");
           return;
         }
 
-        setScramjetStatus("Ready");
-        console.log("Scramjet connected!");
+        setUltravioletStatus("Ready");
+        console.log("Ultraviolet connected!");
       } catch (error) {
         console.error("Startup failed:", error);
-        setScramjetStatus("Failed");
+        setUltravioletStatus("Failed");
       }
     }
 
@@ -1441,11 +1441,11 @@ function App() {
   }
 
   function openNeonTV() {
-    const scramjet = getScramjet();
+    const ultraviolet = getUltraviolet();
 
-    if (!scramjet) {
+    if (!ultraviolet) {
       console.error(
-        "Scramjet is not ready."
+        "Ultraviolet is not ready."
       );
       return;
     }
@@ -1453,7 +1453,7 @@ function App() {
     const url = "https://dulo.gd";
 
     setNeonTVUrl(
-      scramjet.encodeUrl(url)
+      ultraviolet.encodeUrl(url)
     );
 
     setNeonTVOpen(true);
@@ -1538,19 +1538,19 @@ function App() {
 
     if (!url) return;
 
-    const scramjet =
-      getScramjet();
+    const ultraviolet =
+      getUltraviolet();
 
-    if (!scramjet) {
+    if (!ultraviolet) {
       console.error(
-        "Scramjet is not ready."
+        "Ultraviolet is not ready."
       );
 
       return;
     }
 
     const encodedUrl =
-      scramjet.encodeUrl(url);
+      ultraviolet.encodeUrl(url);
 
     let title = input;
 
@@ -1575,12 +1575,12 @@ function App() {
 
     if (!input) return;
 
-    const scramjet =
-      getScramjet();
+    const ultraviolet =
+      getUltraviolet();
 
-    if (!scramjet) {
+    if (!ultraviolet) {
       console.error(
-        "Scramjet is not ready."
+        "Ultraviolet is not ready."
       );
 
       return;
@@ -1592,7 +1592,7 @@ function App() {
     if (!url) return;
 
     const encodedUrl =
-      scramjet.encodeUrl(url);
+      ultraviolet.encodeUrl(url);
 
     let title = input;
 
@@ -2695,14 +2695,14 @@ function App() {
 
           <div
             className={
-              scramjetStatus === "Ready"
-                ? "sj-indicator active"
-                : "sj-indicator"
+              ultravioletStatus === "Ready"
+                ? "uv-indicator active"
+                : "uv-indicator"
             }
-            title="Scramjet status"
+            title="Ultraviolet status"
           >
-            <span className="sj-light"></span>
-            <span>SJ</span>
+            <span className="uv-light"></span>
+            <span>UV</span>
           </div>
         </div>
       </main>
@@ -2953,15 +2953,15 @@ function App() {
                     <div className="new-tab-status">
                       <div
                         className={
-                          scramjetStatus ===
+                          ultravioletStatus ===
                           "Ready"
-                            ? "sj-indicator active"
-                            : "sj-indicator"
+                            ? "uv-indicator active"
+                            : "uv-indicator"
                         }
-                        title="Scramjet status"
+                        title="Ultraviolet status"
                       >
-                        <span className="sj-light"></span>
-                        <span>SJ</span>
+                        <span className="uv-light"></span>
+                        <span>UV</span>
                       </div>
                     </div>
                   </div>

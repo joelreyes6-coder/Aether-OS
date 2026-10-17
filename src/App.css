@@ -2036,7 +2036,7 @@ body {
 
 
 /* =========================================================
-   WEATHER + SCRAMJET STATUS
+   WEATHER + ULTRAVIOLET STATUS
 ========================================================= */
 
 .desktop-info-row {
@@ -2104,7 +2104,7 @@ body {
   font-weight: 600;
 }
 
-.sj-indicator {
+.uv-indicator {
   min-width: 108px;
   display: flex;
   align-items: center;
@@ -2118,7 +2118,7 @@ body {
   letter-spacing: 1.5px;
 }
 
-.sj-light {
+.uv-light {
   width: 9px;
   height: 9px;
   flex-shrink: 0;
@@ -2131,11 +2131,11 @@ body {
     transform 0.25s ease;
 }
 
-.sj-indicator.active {
+.uv-indicator.active {
   color: var(--text);
 }
 
-.sj-indicator.active .sj-light {
+.uv-indicator.active .uv-light {
   background: var(--success);
   transform: scale(1.08);
   box-shadow:
@@ -2144,7 +2144,7 @@ body {
     0 0 28px rgba(var(--glow-1), 0.35);
 }
 
-.new-tab-status .sj-indicator {
+.new-tab-status .uv-indicator {
   min-width: 0;
   padding: 7px 12px;
   border: 1px solid var(--border);
@@ -2165,7 +2165,7 @@ body {
     padding: 12px 14px;
   }
 
-  .sj-indicator {
+  .uv-indicator {
     min-width: 76px;
     padding: 0 12px;
   }
