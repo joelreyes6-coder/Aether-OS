@@ -7677,464 +7677,656 @@ body {
 .gate-launching .aether-enter-status{color:var(--success);text-shadow:0 0 16px var(--success)}
 .gate-launching .aether-gate-shell{border-color:rgba(var(--glow-1),.62);animation:aetherGateGranted 1.5s cubic-bezier(.65,0,.35,1) forwards}
 .gate-launching .aether-enter-loader span{animation:aetherGateGrantedLoad 1.25s ease forwards!important}
-.gate-launching .aether-enter-ring-one{animation-duration:.45s}.gate-launching .aether-enter-ring-two{animation-duration:.32s}
-
+.gate-lanching .aether-enter-ring-one{animation-duration:.45s}.gate-launching .aether-enter-ring-two{animation-duration:.32s}
+u
 
 /* =========================================================
-   AETHER GATE — CURSOR + SECONDARY CONTINUE ACTION
-========================================================= */
-.aether-enter-screen,
-.aether-enter-screen * {
-  cursor: none !important;
+   AETHER STUDY SHELL / KIWI-STYLE FIRST-VISIT WRAPPER
+   ========================================================= */
+
+.aether-study-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  overflow: hidden;
+  background: #f4f7fb;
 }
 
-.cursor-dot,
-.cursor-glow {
-  z-index: 300001;
+#aether-app-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  background: #02040b;
 }
 
-.cursor-dot.gate-interactive {
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  margin-top: -6px;
-  background: var(--text);
-  box-shadow:
-    0 0 8px var(--accent),
-    0 0 18px rgba(var(--glow-1), 0.95),
-    0 0 34px rgba(var(--glow-1), 0.58);
+html.aether-app-open,
+html.aether-app-open body {
+  overflow: hidden !important;
+  background: #02040b !important;
 }
 
-.cursor-glow.gate-interactive {
-  width: 46px;
-  height: 46px;
-  margin-left: -23px;
-  margin-top: -23px;
-  border-color: var(--accent);
-  background: radial-gradient(
-    circle,
-    rgba(var(--glow-1), 0.24),
-    rgba(var(--glow-1), 0.08) 48%,
-    transparent 72%
-  );
-  box-shadow:
-    0 0 25px rgba(var(--glow-1), 0.34),
-    inset 0 0 14px rgba(var(--glow-1), 0.15);
+html.aether-app-open .aether-study-shell > .study-cover {
+  display: none !important;
 }
 
-.aether-gate-continue-button {
-  width: auto;
-  min-width: 170px;
-  min-height: 32px;
-  align-self: center;
-  padding: 0 16px;
-  border-radius: 10px;
-  font-size: 7px;
-  letter-spacing: 1.5px;
-  opacity: 0.82;
-}
-
-.aether-gate-continue-button:hover {
-  opacity: 1;
-}
-
-
-/* AETHER GATE: force the gate cursor on even when Aether is saved to System cursor mode. */
-.cursor-mode-system.gate-active .cursor-dot,
-.cursor-mode-system.gate-active .cursor-glow {
+html.aether-app-open #aether-app-frame {
   display: block !important;
 }
 
-.cursor-mode-system.gate-active .aether-enter-screen,
-.cursor-mode-system.gate-active .aether-enter-screen * {
-  cursor: none !important;
+.study-cover {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  overflow: auto;
+  padding: 28px clamp(20px, 4vw, 68px) 28px;
+  color: #1f2937;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(115, 148, 255, 0.15), transparent 32%),
+    radial-gradient(circle at 88% 18%, rgba(124, 214, 190, 0.18), transparent 30%),
+    linear-gradient(145deg, #f7f9fc 0%, #eef3f8 52%, #f8fbfd 100%);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
-
-/* =========================================================
-   AETHER GATE — DEDICATED CURSOR V2
-   Completely independent from the desktop cursor setting.
-========================================================= */
-.aether-enter-screen,
-.aether-enter-screen * {
-  cursor: none !important;
+.study-cover,
+.study-cover * {
+  cursor: default;
 }
 
-.aether-gate-cursor-dot,
-.aether-gate-cursor-ring {
+.study-cover button,
+.study-cover .study-answer-row span {
+  cursor: pointer;
+}
+
+.study-cover-orb {
   position: fixed;
-  left: 0;
-  top: 0;
-  pointer-events: none !important;
-  opacity: 0;
-  z-index: 999999;
-  will-change: transform, width, height, opacity;
-}
-
-.aether-gate-cursor-dot {
-  width: 9px;
-  height: 9px;
-  margin-left: -4.5px;
-  margin-top: -4.5px;
+  width: 420px;
+  height: 420px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 0 8px var(--accent), 0 0 18px rgba(var(--glow-1), .95), 0 0 34px rgba(var(--glow-1), .55);
-  transition: width .14s ease, height .14s ease, margin .14s ease, box-shadow .14s ease;
+  filter: blur(80px);
+  opacity: 0.35;
+  pointer-events: none;
 }
 
-.aether-gate-cursor-ring {
-  width: 30px;
-  height: 30px;
-  margin-left: -15px;
-  margin-top: -15px;
-  border: 1px solid rgba(var(--glow-1), .75);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--glow-1), .10), transparent 68%);
-  box-shadow: 0 0 18px rgba(var(--glow-1), .28), inset 0 0 10px rgba(var(--glow-1), .08);
-  transition: width .16s ease, height .16s ease, margin .16s ease, border-color .16s ease, background .16s ease;
+.study-cover-orb-one {
+  top: -220px;
+  left: -170px;
+  background: rgba(103, 129, 255, 0.32);
 }
 
-.aether-gate-cursor-dot.visible,
-.aether-gate-cursor-ring.visible {
-  opacity: 1;
+.study-cover-orb-two {
+  right: -180px;
+  bottom: -250px;
+  background: rgba(80, 197, 157, 0.3);
 }
 
-.aether-gate-cursor-dot.interactive {
-  width: 13px;
-  height: 13px;
-  margin-left: -6.5px;
-  margin-top: -6.5px;
-  box-shadow: 0 0 10px #fff, 0 0 22px var(--accent), 0 0 40px rgba(var(--glow-1), .8);
+.study-cover-header,
+.study-cover-hero,
+.study-cover-grid,
+.study-cover-footer {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 100%);
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.aether-gate-cursor-ring.interactive {
+.study-cover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.study-cover-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.study-cover-logo {
   width: 44px;
   height: 44px;
-  margin-left: -22px;
-  margin-top: -22px;
-  border-color: var(--accent);
-  background: radial-gradient(circle, rgba(var(--glow-1), .22), rgba(var(--glow-1), .05) 52%, transparent 72%);
-}
-
-/* Keep Next Question dominant; Continue is intentionally smaller. */
-.aether-gate-continue-button {
-  width: auto !important;
-  min-width: 142px !important;
-  min-height: 28px !important;
-  padding: 0 12px !important;
-  border-radius: 9px !important;
-  font-size: 6.5px !important;
-  letter-spacing: 1.25px !important;
-  opacity: .72 !important;
-}
-
-.aether-gate-continue-button:hover {
-  opacity: 1 !important;
-}
-
-@media (pointer: coarse) {
-  .aether-enter-screen,
-  .aether-enter-screen * {
-    cursor: auto !important;
-  }
-
-  .aether-gate-cursor-dot,
-  .aether-gate-cursor-ring {
-    display: none !important;
-  }
-}
-
-
-/* =====================================================
-   AETHER NOTES
-===================================================== */
-
-.notes-window {
-  min-width: 560px;
-  min-height: 420px;
-  overflow: hidden;
-}
-
-.notes-shell {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
-  height: calc(100% - 44px);
-  min-height: 0;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff;
+  background: linear-gradient(145deg, #5674e8, #6f8ef4);
+  box-shadow: 0 10px 24px rgba(76, 101, 201, 0.22);
+  font-size: 19px;
+  font-weight: 800;
 }
 
-.notes-sidebar {
-  min-width: 0;
-  border-right: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(7, 12, 25, 0.92), rgba(3, 6, 14, 0.88));
+.study-cover-brand > div:last-child {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 2px;
 }
 
-.notes-sidebar-top {
+.study-cover-brand strong {
+  color: #172033;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+}
+
+.study-cover-brand span,
+.study-cover-date {
+  color: #7a8598;
+  font-size: 12px;
+}
+
+.study-cover-hero {
+  margin-top: clamp(36px, 7vh, 76px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
+  gap: 44px;
 }
 
-.notes-sidebar-top > div {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
+.study-cover-kicker,
+.study-card-eyebrow {
+  color: #6979bc;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
 }
 
-.notes-kicker {
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  color: var(--accent);
-  opacity: 0.82;
+.study-cover-hero h1 {
+  max-width: 680px;
+  margin: 10px 0 12px;
+  color: #172033;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.02;
+  letter-spacing: -2px;
 }
 
-.notes-sidebar-top strong {
-  font-size: 13px;
-  color: var(--text);
+.study-cover-hero p {
+  max-width: 650px;
+  margin: 0;
+  color: #6f7a8d;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
-.notes-new-button {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--accent) 62%, transparent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--text);
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
-}
-
-.notes-new-button:hover {
-  transform: translateY(-1px);
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 24%, transparent);
-}
-
-.notes-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-}
-
-.notes-list-item {
-  width: 100%;
-  display: grid;
-  gap: 5px;
-  text-align: left;
-  padding: 12px;
-  margin-bottom: 7px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
-}
-
-.notes-list-item:hover {
-  background: rgba(255, 255, 255, 0.045);
-  transform: translateX(2px);
-}
-
-.notes-list-item.active {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  background: color-mix(in srgb, var(--accent) 10%, rgba(255,255,255,0.02));
-}
-
-.notes-list-item strong,
-.notes-list-item span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.notes-list-item strong {
-  font-size: 13px;
-}
-
-.notes-list-item span {
-  font-size: 11px;
-  color: color-mix(in srgb, var(--text) 62%, transparent);
-}
-
-.notes-list-item small {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: color-mix(in srgb, var(--text) 42%, transparent);
-}
-
-.notes-editor {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(145deg, rgba(4, 8, 18, 0.84), rgba(8, 13, 27, 0.7));
-}
-
-.notes-editor-toolbar {
-  min-height: 45px;
+.study-cover-progress {
+  min-width: 240px;
   display: flex;
   align-items: center;
+  gap: 16px;
+  padding: 17px 20px;
+  border: 1px solid rgba(91, 109, 149, 0.13);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 16px 40px rgba(45, 62, 91, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.study-cover-progress-ring {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffffff 58%, transparent 60%),
+    conic-gradient(#687fe8 0 72%, #e3e8f1 72% 100%);
+}
+
+.study-cover-progress-ring span {
+  color: #46598c;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.study-cover-progress > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.study-cover-progress strong {
+  color: #28334a;
+  font-size: 13px;
+}
+
+.study-cover-progress > div:last-child span {
+  color: #8791a2;
+  font-size: 11px;
+}
+
+.study-cover-grid {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.study-card {
+  min-height: 190px;
+  padding: 22px;
+  border: 1px solid rgba(93, 112, 151, 0.13);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 45px rgba(51, 67, 97, 0.07);
+  backdrop-filter: blur(16px);
+}
+
+.study-card-wide {
+  grid-column: span 2;
+}
+
+.study-card-heading {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--border);
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  color: color-mix(in srgb, var(--text) 50%, transparent);
 }
 
-.notes-delete-button {
-  border: 1px solid rgba(255, 93, 122, 0.28);
-  background: rgba(255, 65, 103, 0.07);
-  color: #ff8ca4;
-  border-radius: 8px;
+.study-card h2 {
+  margin: 5px 0 0;
+  color: #202b40;
+  font-size: 20px;
+}
+
+.study-card-count {
   padding: 7px 10px;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-}
-
-.notes-delete-button:hover {
-  background: rgba(255, 65, 103, 0.14);
-}
-
-.notes-title-input,
-.notes-body-input {
-  width: 100%;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: var(--text);
-  font-family: inherit;
-}
-
-.notes-title-input {
-  padding: 24px 26px 10px;
-  font-size: clamp(22px, 2.4vw, 34px);
+  border-radius: 999px;
+  color: #6e7ba0;
+  background: #f0f3f9;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: -0.03em;
 }
 
-.notes-title-input::placeholder,
-.notes-body-input::placeholder {
-  color: color-mix(in srgb, var(--text) 28%, transparent);
+.study-task-list {
+  margin-top: 15px;
+  display: grid;
+  gap: 8px;
 }
 
-.notes-body-input {
+.study-task {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 11px;
+  border-radius: 13px;
+  background: rgba(244, 247, 251, 0.9);
+}
+
+.study-task-check {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #fff;
+  background: #63b799;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.study-task-check.pending {
+  color: #6170a6;
+  background: #e5e9f5;
+}
+
+.study-task > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.study-task strong {
+  color: #303b50;
+  font-size: 12px;
+}
+
+.study-task span,
+.study-task em {
+  color: #8a94a5;
+  font-size: 10px;
+  font-style: normal;
+}
+
+.study-timer,
+.study-equation {
+  margin-top: 19px;
+  color: #26334e;
+  font-size: 38px;
+  font-weight: 300;
+  letter-spacing: -1.5px;
+}
+
+.study-card p {
+  margin: 9px 0 0;
+  color: #7b8699;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.study-soft-button {
+  margin-top: 18px;
+  padding: 9px 14px;
+  border: 1px solid rgba(91, 112, 187, 0.17);
+  border-radius: 10px;
+  color: #5366ad;
+  background: #f2f5fd;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.study-answer-row {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.study-answer-row span {
+  display: grid;
+  place-items: center;
+  padding: 8px 0;
+  border-radius: 9px;
+  color: #65718a;
+  background: #f1f4f8;
+  font-size: 11px;
+  transition: 0.16s ease;
+}
+
+.study-answer-row span:hover {
+  color: #43579b;
+  background: #e7ecfa;
+  transform: translateY(-1px);
+}
+
+.study-card-quote blockquote {
+  margin: 19px 0 14px;
+  color: #39445a;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.study-muted {
+  color: #98a0ad;
+  font-size: 10px;
+}
+
+.study-streak-row {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.study-streak-row span {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #9099a9;
+  background: #f0f3f7;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.study-streak-row span.active {
+  color: #fff;
+  background: #687fe8;
+  box-shadow: 0 6px 14px rgba(82, 104, 201, 0.19);
+}
+
+.study-cover-footer {
+  margin-top: 18px;
+  padding-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: #9ba4b3;
+  font-size: 10px;
+}
+
+@media (max-width: 900px) {
+  .study-cover-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .study-cover-progress {
+    width: 100%;
+  }
+
+  .study-cover-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .study-card-wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .study-cover {
+    padding: 20px 15px 28px;
+  }
+
+  .study-cover-date {
+    display: none;
+  }
+
+  .study-cover-hero {
+    margin-top: 38px;
+  }
+
+  .study-cover-hero h1 {
+    font-size: 38px;
+  }
+
+  .study-cover-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .study-card-wide {
+    grid-column: auto;
+  }
+
+  .study-cover-footer {
+    flex-direction: column;
+  }
+}
+
+
+/* =========================================================
+   FUNCTIONAL STUDY WORKSPACE CONTROLS
+   ========================================================= */
+
+.study-task {
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.study-task.done {
+  opacity: 0.68;
+}
+
+.study-task.done .study-task-main strong {
+  text-decoration: line-through;
+}
+
+.study-task-check {
+  border: 0;
+  cursor: pointer !important;
+}
+
+.study-task-main {
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer !important;
+}
+
+.study-task-main strong {
+  color: #303b50;
+  font-size: 12px;
+}
+
+.study-task-main span {
+  color: #8a94a5;
+  font-size: 10px;
+}
+
+.study-task-delete {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #a5adbb;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer !important;
+}
+
+.study-task-delete:hover {
+  color: #cb5365;
+  background: rgba(203, 83, 101, 0.09);
+}
+
+.study-add-task {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.study-add-task input {
+  min-width: 0;
   flex: 1;
-  min-height: 0;
-  resize: none;
-  padding: 8px 26px 24px;
-  font-size: 15px;
-  line-height: 1.72;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(91, 112, 187, 0.16);
+  border-radius: 10px;
+  outline: none;
+  background: #f6f8fc;
+  color: #303b50;
+  font: inherit;
+  font-size: 11px;
+  cursor: text !important;
 }
 
-.notes-statusbar {
-  min-height: 34px;
+.study-add-task input:focus {
+  border-color: rgba(86, 116, 232, 0.55);
+  box-shadow: 0 0 0 3px rgba(86, 116, 232, 0.08);
+}
+
+.study-add-task button {
+  padding: 0 15px;
+  border: 1px solid rgba(91, 112, 187, 0.16);
+  border-radius: 10px;
+  background: #687fe8;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  cursor: pointer !important;
+}
+
+.study-timer-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 18px;
-  border-top: 1px solid var(--border);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: color-mix(in srgb, var(--text) 42%, transparent);
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.notes-empty {
-  margin: auto;
+.study-soft-button.secondary {
+  color: #79859a;
+  background: #f5f6f9;
+}
+
+.study-answer-row button {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 8px 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #65718a;
+  background: #f1f4f8;
   font-size: 11px;
-  letter-spacing: 0.18em;
-  color: color-mix(in srgb, var(--text) 42%, transparent);
+  font-weight: 700;
+  cursor: pointer !important;
+  transition: 0.16s ease;
 }
 
-.notes-icon {
-  position: relative;
-  border-radius: 7px;
-  border: 1px solid color-mix(in srgb, var(--accent) 52%, transparent);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 18%, transparent), rgba(255,255,255,0.03));
-  box-shadow: inset 0 0 12px rgba(255,255,255,0.03);
+.study-answer-row button:hover {
+  color: #43579b;
+  border-color: rgba(86, 116, 232, 0.2);
+  background: #e7ecfa;
+  transform: translateY(-1px);
 }
 
-.notes-icon::before,
-.notes-icon::after,
-.notes-icon > span::before {
-  content: "";
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  height: 1px;
-  background: color-mix(in srgb, var(--text) 72%, transparent);
-  border-radius: 99px;
+.study-answer-row button.correct {
+  color: #17745c;
+  border-color: rgba(57, 168, 133, 0.25);
+  background: rgba(76, 196, 155, 0.14);
 }
 
-.notes-icon::before { top: 31%; }
-.notes-icon::after { top: 50%; }
-.notes-icon > span::before { top: 69%; }
+.study-math-card.wrong {
+  animation: studyWrongShake 0.32s ease;
+}
 
-@media (max-width: 760px) {
-  .notes-shell {
-    grid-template-columns: 185px minmax(0, 1fr);
+.study-math-card.correct {
+  border-color: rgba(67, 180, 142, 0.28);
+}
+
+.study-math-feedback {
+  min-height: 18px;
+}
+
+.study-math-card.correct .study-math-feedback {
+  color: #25856a;
+  font-weight: 700;
+}
+
+.study-math-card.wrong .study-math-feedback {
+  color: #bd5565;
+  font-weight: 700;
+}
+
+.study-next-question {
+  margin-top: 12px;
+  padding: 9px 13px;
+  border: 1px solid rgba(91, 112, 187, 0.16);
+  border-radius: 10px;
+  background: #687fe8;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  cursor: pointer !important;
+}
+
+@keyframes studyWrongShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@media (max-width: 620px) {
+  .study-add-task {
+    flex-direction: column;
   }
 
-  .notes-title-input {
-    padding-left: 18px;
-    padding-right: 18px;
+  .study-add-task button {
+    height: 38px;
   }
-
-  .notes-body-input {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-}
-
-
-/* =========================================================
-   AETHER GATE — NATIVE CURSOR FAILSAFE V3
-   Native SVG cursor so the lock-screen pointer cannot vanish
-   if the animated cursor layer fails or a saved OS cursor mode
-   tries to override it.
-========================================================= */
-.aether-enter-screen,
-.aether-enter-screen * {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='8' cy='8' r='4' fill='white'/%3E%3Ccircle cx='8' cy='8' r='7' fill='none' stroke='%237fe7ff' stroke-width='1.5'/%3E%3Cpath d='M8 0v3M8 13v3M0 8h3M13 8h3' stroke='%237fe7ff' stroke-width='1.2'/%3E%3C/svg%3E") 8 8, crosshair !important;
-}
-
-.aether-enter-screen button,
-.aether-enter-screen input,
-.aether-enter-screen [role='button'],
-.aether-enter-screen .aether-gate-symbols button {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Ccircle cx='9' cy='9' r='5' fill='white'/%3E%3Ccircle cx='9' cy='9' r='8' fill='none' stroke='%237fe7ff' stroke-width='2'/%3E%3Cpath d='M18 15l7 3-3 2 2 5-2 1-2-5-3 2z' fill='%237fe7ff' stroke='white' stroke-width='.7'/%3E%3C/svg%3E") 9 9, pointer !important;
-}
-
-/* Keep the animated glow cursor as decoration, but the native cursor above
-   remains visible underneath as a reliable input pointer. */
-.aether-gate-cursor-dot,
-.aether-gate-cursor-ring {
-  mix-blend-mode: screen;
-}
-
-/* =========================================================
-   NOTES — TASKBAR VISIBILITY FAILSAFE
-========================================================= */
-.taskbar .notes-taskbar-button {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.taskbar .notes-taskbar-button .notes-icon {
-  display: inline-flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
 }

@@ -2,6 +2,82 @@
   box-sizing: border-box;
 }
 
+#aether-reload-alert {
+  width: min(408px, calc(100vw - 32px));
+  margin: auto;
+  padding: 16px;
+  border: 1px solid #607bef66;
+  border-radius: 16px;
+  color: #e1e7ff;
+  background: #0a1021;
+  box-shadow: 0 24px 70px #0009, 0 0 35px #687fe81a;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+#aether-reload-alert::backdrop {
+  background: #030719c9;
+  backdrop-filter: blur(5px);
+}
+
+.aether-alert-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 38px 14px 0;
+  border-bottom: 1px solid #687fe833;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.aether-alert-brand span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: white;
+  background: #687fe8;
+}
+
+#aether-reload-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #bbc6ec;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+#aether-reload-close:hover { background: #687fe826; }
+#aether-reload-close:focus-visible { outline: 2px solid #a6b5ff; }
+
+#aether-reload-alert h2 {
+  display: grid;
+  place-items: center;
+  min-height: 100px;
+  margin: 12px 0 0;
+  padding: 18px;
+  border: 1px solid #687fe84d;
+  border-radius: 10px;
+  background: #101a35;
+  font-size: 21px;
+  font-weight: 500;
+  text-align: center;
+}
+
+#aether-reload-alert p {
+  margin: 12px 0 0;
+  color: #a3b0d2;
+  font-size: 12px;
+  text-align: center;
+}
+
 html,
 body {
   margin: 0;

@@ -8,6 +8,12 @@
       content="A simple personal study workspace for assignments, focus sessions, and practice."
     />
     <title>Study Workspace</title>
+    <style>
+      #aether-app-frame { display: none; }
+      html.aether-app-open, html.aether-app-open body { margin: 0; overflow: hidden; background: #02040b; }
+      html.aether-app-open body > :not(#aether-app-frame) { display: none !important; }
+      html.aether-app-open #aether-app-frame { display: block !important; position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; }
+    </style>
     <link rel="stylesheet" href="/src/study-shell.css" />
 
     <script>
@@ -18,6 +24,7 @@
 
         function openAether() {
           document.documentElement.classList.add("aether-app-open");
+          document.title = "Aether";
 
           function mount() {
             var frame = document.getElementById("aether-app-frame");
@@ -199,11 +206,28 @@
 
     <iframe
       id="aether-app-frame"
-      title="Study Workspace"
+      title="AETHER OS"
       allow="fullscreen; autoplay; clipboard-read; clipboard-write; gamepad"
       allowfullscreen
     ></iframe>
 
+    <dialog id="aether-reload-alert" aria-labelledby="aether-reload-title">
+      <button id="aether-reload-close" type="button" aria-label="Close notice">×</button>
+      <div class="aether-alert-brand"><span aria-hidden="true">A</span> AETHER</div>
+      <h2 id="aether-reload-title">refresh to open aether</h2>
+      <p>Your study workspace is ready below.</p>
+    </dialog>
+
+    <script>
+      (function () {
+        if (document.documentElement.classList.contains("aether-app-open")) return;
+        var notice = document.getElementById("aether-reload-alert");
+        document.getElementById("aether-reload-close").addEventListener("click", function () {
+          notice.close();
+        });
+        notice.showModal();
+      })();
+    </script>
     <script type="module" src="/src/study-shell.js"></script>
   </body>
 </html>

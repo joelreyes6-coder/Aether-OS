@@ -41,7 +41,9 @@ function writeJSON(key, value) {
 
 function readNumber(key, fallback) {
   try {
-    const value = Number(localStorage.getItem(key));
+    const stored = localStorage.getItem(key);
+    if (stored === null) return fallback;
+    const value = Number(stored);
     return Number.isFinite(value) ? value : fallback;
   } catch {
     return fallback;
